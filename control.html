@@ -1,248 +1,185 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理员中心</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Microsoft YaHei", sans-serif;
-        }
-
-        body {
-            background: #0b0c10;
-            color: #fff;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .panel {
-            background: #1f2833;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #45a29e;
-        }
-
-        .panel h2 {
-            color: #66fcf1;
-            margin-bottom: 15px;
-            font-size: 18px;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
-            background: #0b0c10;
-            border: 1px solid #45a29e;
-            color: #fff;
-            border-radius: 5px;
-        }
-
-        textarea {
-            height: 100px;
-            resize: none;
-        }
-
-        button {
-            background: #45a29e;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 5px;
-        }
-
-        button:hover {
-            background: #66fcf1;
-            color: #000;
-        }
-
-        .list {
-            margin-top: 15px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .item {
-            padding: 10px;
-            background: #0b0c10;
-            margin-bottom: 8px;
-            border-radius: 5px;
-            border-left: 3px solid #45a29e;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理员中心</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Microsoft YaHei,sans-serif}
+body{background:#0b0c10;color:#fff;padding:20px}
+.container{max-width:1000px;margin:0 auto}
+.panel{background:#1f2833;border-radius:10px;padding:20px;margin-bottom:20px;border:1px solid #45a29e}
+.panel h2{color:#66fcf1;margin-bottom:15px;font-size:18px}
+input,textarea{width:100%;padding:10px;margin:8px 0;background:#0b0c10;border:1px solid #45a29e;color:#fff;border-radius:5px}
+textarea{height:100px;resize:none}
+button{background:#45a29e;color:#fff;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;margin:5px}
+button:hover{background:#66fcf1;color:#000}
+.list{margin-top:15px;max-height:200px;overflow-y:auto}
+.item{padding:10px;background:#0b0c10;margin-bottom:8px;border-radius:5px;border-left:3px solid #45a29e}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="panel">
-            <h2>📢 公告管理</h2>
-            <input type="text" id="noticeContent" placeholder="输入公告内容">
-            <button onclick="addNotice()">发布公告</button>
-            <button onclick="clearNotice()">清空公告</button>
-            <div id="noticeList" class="list"></div>
-        </div>
+<div class="container">
+<div class="panel">
+<h2>📢 公告管理</h2>
+<input type="text" id="noticeContent" placeholder="输入公告内容">
+<button onclick="addNotice()">发布公告</button>
+<button onclick="clearNotice()">清空公告</button>
+<div id="noticeList" class="list"></div>
+</div>
 
-        <div class="panel"><h2>📝 文章管理</h2><div id="articleList" class="list"></div></div>
-        <div class="panel"><h2>📁 资源管理</h2><div id="resList" class="list"></div></div>
-        <div class="panel"><h2>👤 用户管理</h2><div id="userList" class="list"></div></div>
-        <div class="panel"><h2>💬 留言管理</h2><div id="msgList" class="list"></div></div>
-        <div class="panel"><h2>🚫 设备封禁管理</h2><div id="banList" class="list"></div></div>
+<div class="panel"><h2>📝 文章管理</h2><div id="articleList" class="list"></div></div>
+<div class="panel"><h2>📁 资源管理</h2><div id="resList" class="list"></div></div>
+<div class="panel"><h2>👤 用户管理</h2><div id="userList" class="list"></div></div>
+<div class="panel"><h2>💬 留言管理</h2><div id="msgList" class="list"></div></div>
+<div class="panel"><h2>🚫 设备封禁管理</h2><div id="banList" class="list"></div></div>
 
-        <button onclick="logout()" style="background:#e74c3c;">退出登录</button>
-    </div>
+<button onclick="logout()" style="background:#e74c3c;">退出登录</button>
+</div>
 
 <script>
-// ====================== 公告发布（线上可用） ======================
-async function addNotice(){
-  let c = document.getElementById("noticeContent").value.trim();
-  if(!c){alert("请输入内容");return}
-  try{
-    let r=await fetch("https://unve-api.onrender.com/api/announce",{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({title:"管理员公告",content:c})
-    });
-    let d=await r.json();
-    if(d.success){alert("发布成功！");document.getElementById("noticeContent").value="";loadNotices()}
-    else{alert("发布失败")}
-  }catch(e){alert("网络异常")}
+// 纯本地公告，不联网，不报错
+function addNotice(){
+    let c = document.getElementById("noticeContent").value.trim();
+    if(!c){alert("请输入内容");return}
+    let list = JSON.parse(localStorage.getItem("siteNotices")||"[]");
+    list.unshift({content:c,time:new Date().toLocaleString(),user:"管理员"});
+    localStorage.setItem("siteNotices",JSON.stringify(list));
+    alert("发布成功！");
+    document.getElementById("noticeContent").value="";
+    loadNotices();
 }
 
-async function loadNotices(){
-  try{
-    let r=await fetch("https://unve-api.onrender.com/api/get-announce");
-    let d=await r.json();
-    document.getElementById("noticeList").innerHTML=d.content
-      ?`<div class="item"><p>${d.content}</p><small>${d.time}</small></div>`
-      :"<p>暂无公告</p>";
-  }catch(e){document.getElementById("noticeList").innerHTML="<p>加载失败</p>"}
-}
-
-async function clearNotice(){
-  if(!confirm("确定清空？"))return;
-  try{await fetch("https://unve-api.onrender.com/api/clear-announce");alert("已清空");loadNotices()}
-  catch(e){alert("清空失败")}
-}
-
-// ====================== 原有所有功能 ======================
-function loadArticles() {
-    let articles = JSON.parse(localStorage.getItem("articles") || "[]");
+function loadNotices(){
+    let list = JSON.parse(localStorage.getItem("siteNotices")||"[]");
     let html = "";
-    articles.forEach((item, i) => {
-        html += `<div class="item">标题：${item.title} | 用户：${item.user} <button onclick="delArt(${i})">删除</button></div>`;
+    list.forEach((item,i)=>{
+        html+=`<div class="item">${item.content}<br><small>${item.time}</small><button onclick="delNotice(${i})">删除</button></div>`;
     });
-    document.getElementById("articleList").innerHTML = html || "<p>暂无文章</p>";
+    document.getElementById("noticeList").innerHTML=html||"<p>暂无公告</p>";
 }
 
-function delArt(i) {
-    if (!confirm("确定删除？")) return;
-    let articles = JSON.parse(localStorage.getItem("articles") || "[]");
-    articles.splice(i, 1);
-    localStorage.setItem("articles", JSON.stringify(articles));
+function delNotice(i){
+    if(!confirm("确定删除？"))return;
+    let list=JSON.parse(localStorage.getItem("siteNotices")||"[]");
+    list.splice(i,1);
+    localStorage.setItem("siteNotices",JSON.stringify(list));
+    loadNotices();
+}
+
+function clearNotice(){
+    if(!confirm("确定清空所有公告？"))return;
+    localStorage.removeItem("siteNotices");
+    loadNotices();
+}
+
+// 文章管理
+function loadArticles(){
+    let list=JSON.parse(localStorage.getItem("articles")||"[]");
+    let html="";
+    list.forEach((item,i)=>{
+        html+=`<div class="item">${item.title} | ${item.user}<button onclick="delArt(${i})">删除</button></div>`;
+    });
+    document.getElementById("articleList").innerHTML=html||"<p>暂无文章</p>";
+}
+function delArt(i){
+    if(!confirm("确定删除？"))return;
+    let list=JSON.parse(localStorage.getItem("articles")||"[]");
+    list.splice(i,1);
+    localStorage.setItem("articles",JSON.stringify(list));
     loadArticles();
 }
 
-function loadRes() {
-    let resList = JSON.parse(localStorage.getItem("resList") || "[]");
-    let html = "";
-    resList.forEach((item, i) => {
-        html += `<div class="item">名称：${item.title} | 用户：${item.user} <button onclick="delRes(${i})">删除</button></div>`;
+// 资源管理
+function loadRes(){
+    let list=JSON.parse(localStorage.getItem("resList")||"[]");
+    let html="";
+    list.forEach((item,i)=>{
+        html+=`<div class="item">${item.title} | ${item.user}<button onclick="delRes(${i})">删除</button></div>`;
     });
-    document.getElementById("resList").innerHTML = html || "<p>暂无资源</p>";
+    document.getElementById("resList").innerHTML=html||"<p>暂无资源</p>";
 }
-
-function delRes(i) {
-    if (!confirm("确定删除？")) return;
-    let resList = JSON.parse(localStorage.getItem("resList") || "[]");
-    resList.splice(i, 1);
-    localStorage.setItem("resList", JSON.stringify(resList));
+function delRes(i){
+    if(!confirm("确定删除？"))return;
+    let list=JSON.parse(localStorage.getItem("resList")||"[]");
+    list.splice(i,1);
+    localStorage.setItem("resList",JSON.stringify(list));
     loadRes();
 }
 
-function loadUsers() {
-    let users = JSON.parse(localStorage.getItem("users") || "[]");
-    let html = "";
-    users.forEach((user, i) => {
-        html += `<div class="item">账号：${user.user} <button onclick="delUser(${i})">删除账号</button></div>`;
+// 用户管理
+function loadUsers(){
+    let list=JSON.parse(localStorage.getItem("users")||"[]");
+    let html="";
+    list.forEach((item,i)=>{
+        html+=`<div class="item">${item.user}<button onclick="delUser(${i})">删除</button></div>`;
     });
-    document.getElementById("userList").innerHTML = html || "<p>暂无用户</p>";
+    document.getElementById("userList").innerHTML=html||"<p>暂无用户</p>";
+}
+function delUser(i){
+    if(!confirm("确定删除？此操作不可恢复！"))return;
+    let users=JSON.parse(localStorage.getItem("users")||"[]");
+    let username=users[i].user;
+    users.splice(i,1);
+    localStorage.setItem("users",JSON.stringify(users));
+
+    let articles=JSON.parse(localStorage.getItem("articles")||"[]").filter(a=>a.user!=username);
+    let res=JSON.parse(localStorage.getItem("resList")||"[]").filter(r=>r.user!=username);
+    localStorage.setItem("articles",JSON.stringify(articles));
+    localStorage.setItem("resList",JSON.stringify(res));
+    loadUsers();loadArticles();loadRes();
 }
 
-function delUser(i) {
-    if (!confirm("确定删除此用户？会删除其所有数据")) return;
-    let users = JSON.parse(localStorage.getItem("users") || "[]");
-    let delUser = users[i].user;
-    users.splice(i, 1);
-    localStorage.setItem("users", JSON.stringify(users));
-
-    let articles = JSON.parse(localStorage.getItem("articles") || "[]").filter(item => item.user !== delUser);
-    let resList = JSON.parse(localStorage.getItem("resList") || "[]").filter(item => item.user !== delUser);
-    localStorage.setItem("articles", JSON.stringify(articles));
-    localStorage.setItem("resList", JSON.stringify(resList));
-    
-    loadUsers();
-    loadArticles();
-    loadRes();
-}
-
-function loadMessages() {
-    let msgs = JSON.parse(localStorage.getItem("guestbook") || "[]");
-    let html = "";
-    msgs.forEach((msg, i) => {
-        let status = msg.hidden ? "【已撤回】" : "";
-        html += `<div class="item">${msg.user} ${msg.time}<br>${msg.content} ${status} <button onclick="adminDelMsg(${i})">删除</button></div>`;
+// 留言管理
+function loadMessages(){
+    let list=JSON.parse(localStorage.getItem("guestbook")||"[]");
+    let html="";
+    list.forEach((item,i)=>{
+        let tip=item.hidden?"【已撤回】":"";
+        html+=`<div class="item">${item.user} ${item.time}<br>${item.content} ${tip}<button onclick="adminDelMsg(${i})">删除</button></div>`;
     });
-    document.getElementById("msgList").innerHTML = html || "<p>暂无留言</p>";
+    document.getElementById("msgList").innerHTML=html||"<p>暂无留言</p>";
 }
-
-function adminDelMsg(i) {
-    if (!confirm("确定删除？")) return;
-    let msgs = JSON.parse(localStorage.getItem("guestbook") || "[]");
-    msgs.splice(i, 1);
-    localStorage.setItem("guestbook", JSON.stringify(msgs));
+function adminDelMsg(i){
+    if(!confirm("确定删除？"))return;
+    let list=JSON.parse(localStorage.getItem("guestbook")||"[]");
+    list.splice(i,1);
+    localStorage.setItem("guestbook",JSON.stringify(list));
     loadMessages();
 }
 
-function loadBans() {
-    let bans = JSON.parse(localStorage.getItem("banRecord") || "[]");
-    let html = "";
-    bans.forEach((item, i) => {
-        html += `<div class="item">设备：${item.devId} | 类型：${item.banType} <button onclick="unban(${i})">解封</button></div>`;
+// 封禁管理
+function loadBans(){
+    let list=JSON.parse(localStorage.getItem("banRecord")||"[]");
+    let html="";
+    list.forEach((item,i)=>{
+        html+=`<div class="item">${item.devId} | ${item.banType}<button onclick="unban(${i})">解封</button></div>`;
     });
-    document.getElementById("banList").innerHTML = html || "<p>暂无封禁</p>";
+    document.getElementById("banList").innerHTML=html||"<p>暂无封禁</p>";
 }
-
-function unban(i) {
-    if (!confirm("确定解封？")) return;
-    let bans = JSON.parse(localStorage.getItem("banRecord") || "[]");
-    bans.splice(i, 1);
-    localStorage.setItem("banRecord", JSON.stringify(bans));
+function unban(i){
+    if(!confirm("确定解封？"))return;
+    let list=JSON.parse(localStorage.getItem("banRecord")||"[]");
+    list.splice(i,1);
+    localStorage.setItem("banRecord",JSON.stringify(list));
     loadBans();
 }
 
-function logout() {
-    localStorage.removeItem("loginUser");
-    localStorage.removeItem("adminLogin");
-    location.href = "login.html";
+// 退出登录
+function logout(){
+    localStorage.clear();
+    location.href="login.html";
 }
 
-window.onload = function() {
+// 页面加载
+window.onload=function(){
     loadNotices();
     loadArticles();
     loadRes();
     loadUsers();
     loadMessages();
     loadBans();
-};
+}
 </script>
 </body>
 </html>

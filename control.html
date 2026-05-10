@@ -20,6 +20,7 @@ button:hover{background:#66fcf1;color:#000}
 </head>
 <body>
 <div class="container">
+
 <div class="panel">
 <h2>📢 公告管理</h2>
 <input type="text" id="noticeContent" placeholder="输入公告内容">
@@ -38,11 +39,13 @@ button:hover{background:#66fcf1;color:#000}
 </div>
 
 <script>
+// 权限验证（你原来的正确逻辑）
 if(localStorage.getItem("adminLogin")!="true"){
     alert("无权限访问！");
     location.href="login.html";
 }
 
+// 公告功能（纯本地，不联网，无报错）
 function addNotice(){
     let c = document.getElementById("noticeContent").value.trim();
     if(!c){alert("请输入内容");return}
@@ -77,8 +80,10 @@ function clearNotice(){
     loadNotices();
 }
 
+// 文章
 function loadArticles(){
-    let list=JSON.parse(localStorage.getItem("articles")||"[]");let ht="";
+    let list=JSON.parse(localStorage.getItem("articles")||"[]");
+    let ht="";
     list.forEach((it,i)=>{ht+=`<div class="item">${it.title} | ${it.user} <button onclick="delArt(${i})">删除</button></div>`});
     document.getElementById("articleList").innerHTML=ht||"<p>暂无文章</p>";
 }
@@ -87,6 +92,7 @@ function delArt(i){
     let a=JSON.parse(localStorage.getItem("articles")||"[]");a.splice(i,1);localStorage.setItem("articles",JSON.stringify(a));loadArticles();
 }
 
+// 资源
 function loadRes(){
     let list=JSON.parse(localStorage.getItem("resList")||"[]");let ht="";
     list.forEach((it,i)=>{ht+=`<div class="item">${it.title} | ${it.user} <button onclick="delRes(${i})">删除</button></div>`});
@@ -97,6 +103,7 @@ function delRes(i){
     let a=JSON.parse(localStorage.getItem("resList")||"[]");a.splice(i,1);localStorage.setItem("resList",JSON.stringify(a));loadRes();
 }
 
+// 用户
 function loadUsers(){
     let list=JSON.parse(localStorage.getItem("users")||"[]");let ht="";
     list.forEach((it,i)=>{ht+=`<div class="item">${it.user} <button onclick="delUser(${i})">删除</button></div>`});
@@ -106,6 +113,7 @@ function delUser(i){
     if(!confirm("确定删除？"))return;
     let users=JSON.parse(localStorage.getItem("users")||"[]");
     let un=users[i].user;users.splice(i,1);localStorage.setItem("users",JSON.stringify(users));
+
     let articles=JSON.parse(localStorage.getItem("articles")||"[]").filter(x=>x.user!=un);
     let res=JSON.parse(localStorage.getItem("resList")||"[]").filter(x=>x.user!=un);
     localStorage.setItem("articles",JSON.stringify(articles));
@@ -113,6 +121,7 @@ function delUser(i){
     loadUsers();loadArticles();loadRes();
 }
 
+// 留言
 function loadMessages(){
     let list=JSON.parse(localStorage.getItem("guestbook")||"[]");let ht="";
     list.forEach((it,i)=>{
@@ -126,6 +135,7 @@ function adminDelMsg(i){
     let a=JSON.parse(localStorage.getItem("guestbook")||"[]");a.splice(i,1);localStorage.setItem("guestbook",JSON.stringify(a));loadMessages();
 }
 
+// 封禁
 function loadBans(){
     let list=JSON.parse(localStorage.getItem("banRecord")||"[]");let ht="";
     list.forEach((it,i)=>{ht+=`<div class="item">${it.devId} | ${it.banType}<button onclick="unban(${i})">解封</button></div>`});
@@ -136,6 +146,7 @@ function unban(i){
     let a=JSON.parse(localStorage.getItem("banRecord")||"[]");a.splice(i,1);localStorage.setItem("banRecord",JSON.stringify(a));loadBans();
 }
 
+// 退出
 function logout(){
     localStorage.clear();location.href="login.html";
 }

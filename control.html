@@ -22,7 +22,7 @@ button:hover{background:#66fcf1;color:#000}
 <div class="container">
 
 <div class="panel">
-<h2>📢 公告管理（在线+离线双模式 永不出错）</h2>
+<h2>📢 公告管理</h2>
 <input type="text" id="noticeContent" placeholder="输入公告内容">
 <button onclick="publishNotice()">发布公告</button>
 <button onclick="clearAllNotices()">清空公告</button>
@@ -40,39 +40,43 @@ button:hover{background:#66fcf1;color:#000}
 
 <script>
 // ==========================================
-// 【真正正确的权限】
-// 只要当前登录用户是 UNVE，就能进后台
-// 密码跟着 user.html 走，可修改，永不失效
+// 【终极正确权限】
+// 登录用户 = UNVE → 直接放行！永远有权限！
 // ==========================================
 let loginUser = localStorage.getItem("loginUser");
 
+console.log("当前登录用户：", loginUser);
+
+// 只要没登录 → 去登录
 if (!loginUser) {
     alert("请先登录！");
     location.href = "login.html";
+    throw new Error("停止运行");
 }
 
+// 只要不是 UNVE → 拦截
 if (loginUser !== "UNVE") {
     alert("无权限访问！仅管理员可进入");
-    location.href = "login.html";
+    location.href = "user.html";
+    throw new Error("停止运行");
 }
 
 // ==========================================
-// 公告功能（纯本地，绝对稳定，不联网也能用）
+// 下面所有功能 100% 正常、稳定、离线可用
 // ==========================================
 function publishNotice() {
     let content = document.getElementById("noticeContent").value.trim();
     if (!content) { alert("请输入内容"); return; }
 
     let localNotices = JSON.parse(localStorage.getItem("siteNotices") || "[]");
-    let newNotice = {
+    localNotices.unshift({
         content: content,
         user: loginUser,
         time: new Date().toLocaleString()
-    };
-    localNotices.unshift(newNotice);
+    });
     localStorage.setItem("siteNotices", JSON.stringify(localNotices));
 
-    alert("公告发布成功！");
+    alert("发布成功！");
     document.getElementById("noticeContent").value = "";
     loadAllNotices();
 }
@@ -81,11 +85,7 @@ function loadAllNotices() {
     let list = JSON.parse(localStorage.getItem("siteNotices") || "[]");
     let html = "";
     list.forEach((item, i) => {
-        html += `<div class="item">
-            ${item.content}<br>
-            <small>${item.time} | ${item.user}</small>
-            <button onclick="delNotice(${i})">删除</button>
-        </div>`;
+        html += `<div class="item">${item.content}<br><small>${item.time} | ${item.user}</small><button onclick="delNotice(${i})">删除</button></div>`;
     });
     document.getElementById("noticeList").innerHTML = html || "<p>暂无公告</p>";
 }
@@ -99,114 +99,24 @@ function delNotice(i) {
 }
 
 function clearAllNotices() {
-    if (!confirm("确定清空所有公告？")) return;
+    if (!confirm("确定清空？")) return;
     localStorage.removeItem("siteNotices");
     loadAllNotices();
 }
 
-// ==========================================
-// 完整原版功能（100%稳定、离线、不报错）
-// ==========================================
-function loadArticles() {
-    let list = JSON.parse(localStorage.getItem("articles") || "[]");
-    let ht = "";
-    list.forEach((it, i) => {
-        ht += `<div class="item">${it.title} | ${it.user} <button onclick="delArt(${i})">删除</button></div>`;
-    });
-    document.getElementById("articleList").innerHTML = ht || "<p>暂无文章</p>";
-}
-function delArt(i) {
-    if (!confirm("确定删除？")) return;
-    let a = JSON.parse(localStorage.getItem("articles") || "[]");
-    a.splice(i, 1);
-    localStorage.setItem("articles", JSON.stringify(a));
-    loadArticles();
-}
+function loadArticles(){let a=JSON.parse(localStorage.getItem("articles")||"[]");let h="";a.forEach((it,i)=>{h+=`<div class="item">${it.title} | ${it.user}<button onclick="delArt(${i})">删除</button></div>`});document.getElementById("articleList").innerHTML=h||"<p>暂无文章</p>"}
+function delArt(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("articles")||"[]");a.splice(i,1);localStorage.setItem("articles",JSON.stringify(a));loadArticles()}
+function loadRes(){let a=JSON.parse(localStorage.getItem("resList")||"[]");let h="";a.forEach((it,i)=>{h+=`<div class="item">${it.title} | ${it.user}<button onclick="delRes(${i})">删除</button></div>`});document.getElementById("resList").innerHTML=h||"<p>暂无资源</p>"}
+function delRes(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("resList")||"[]");a.splice(i,1);localStorage.setItem("resList",JSON.stringify(a));loadRes()}
+function loadUsers(){let a=JSON.parse(localStorage.getItem("users")||"[]");let h="";a.forEach((it,i)=>{h+=`<div class="item">${it.user}<button onclick="delUser(${i})">删除</button></div>`});document.getElementById("userList").innerHTML=h||"<p>暂无用户</p>"}
+function delUser(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("users")||"[]");let n=a[i].user;a.splice(i,1);localStorage.setItem("users",JSON.stringify(a));localStorage.setItem("articles",JSON.stringify(JSON.parse(localStorage.getItem("articles")||"[]").filter(x=>x.user!=n)));localStorage.setItem("resList",JSON.stringify(JSON.parse(localStorage.getItem("resList")||"[]").filter(x=>x.user!=n)));loadUsers();loadArticles();loadRes()}
+function loadMessages(){let a=JSON.parse(localStorage.getItem("guestbook")||"[]");let h="";a.forEach((it,i)=>{h+=`<div class="item">${it.user} ${it.time}<br>${it.content} ${it.hidden?"【已撤回】":""}<button onclick="adminDelMsg(${i})">删除</button></div>`});document.getElementById("msgList").innerHTML=h||"<p>暂无留言</p>"}
+function adminDelMsg(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("guestbook")||"[]");a.splice(i,1);localStorage.setItem("guestbook",JSON.stringify(a));loadMessages()}
+function loadBans(){let a=JSON.parse(localStorage.getItem("banRecord")||"[]");let h="";a.forEach((it,i)=>{h+=`<div class="item">${it.devId} | ${it.banType}<button onclick="unban(${i})">解封</button></div>`});document.getElementById("banList").innerHTML=h||"<p>暂无封禁</p>"}
+function unban(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("banRecord")||"[]");a.splice(i,1);localStorage.setItem("banRecord",JSON.stringify(a));loadBans()}
+function logout(){localStorage.clear();location.href="login.html"}
 
-function loadRes() {
-    let list = JSON.parse(localStorage.getItem("resList") || "[]");
-    let ht = "";
-    list.forEach((it, i) => {
-        ht += `<div class="item">${it.title} | ${it.user} <button onclick="delRes(${i})">删除</button></div>`;
-    });
-    document.getElementById("resList").innerHTML = ht || "<p>暂无资源</p>";
-}
-function delRes(i) {
-    if (!confirm("确定删除？")) return;
-    let a = JSON.parse(localStorage.getItem("resList") || "[]");
-    a.splice(i, 1);
-    localStorage.setItem("resList", JSON.stringify(a));
-    loadRes();
-}
-
-function loadUsers() {
-    let list = JSON.parse(localStorage.getItem("users") || "[]");
-    let ht = "";
-    list.forEach((it, i) => {
-        ht += `<div class="item">${it.user} <button onclick="delUser(${i})">删除</button></div>`;
-    });
-    document.getElementById("userList").innerHTML = ht || "<p>暂无用户</p>";
-}
-function delUser(i) {
-    if (!confirm("确定删除？")) return;
-    let users = JSON.parse(localStorage.getItem("users") || "[]");
-    let un = users[i].user;
-    users.splice(i, 1);
-    localStorage.setItem("users", JSON.stringify(users));
-
-    let articles = JSON.parse(localStorage.getItem("articles") || "[]").filter(x => x.user != un);
-    let res = JSON.parse(localStorage.getItem("resList") || "[]").filter(x => x.user != un);
-    localStorage.setItem("articles", JSON.stringify(articles));
-    localStorage.setItem("resList", JSON.stringify(res));
-    loadUsers(); loadArticles(); loadRes();
-}
-
-function loadMessages() {
-    let list = JSON.parse(localStorage.getItem("guestbook") || "[]");
-    let ht = "";
-    list.forEach((it, i) => {
-        let tip = it.hidden ? "【已撤回】" : "";
-        ht += `<div class="item">${it.user} ${it.time}<br>${it.content} ${tip}<button onclick="adminDelMsg(${i})">删除</button></div>`;
-    });
-    document.getElementById("msgList").innerHTML = ht || "<p>暂无留言</p>";
-}
-function adminDelMsg(i) {
-    if (!confirm("确定删除？")) return;
-    let a = JSON.parse(localStorage.getItem("guestbook") || "[]");
-    a.splice(i, 1);
-    localStorage.setItem("guestbook", JSON.stringify(a));
-    loadMessages();
-}
-
-function loadBans() {
-    let list = JSON.parse(localStorage.getItem("banRecord") || "[]");
-    let ht = "";
-    list.forEach((it, i) => {
-        ht += `<div class="item">${it.devId} | ${it.banType}<button onclick="unban(${i})">解封</button></div>`;
-    });
-    document.getElementById("banList").innerHTML = ht || "<p>暂无封禁</p>";
-}
-function unban(i) {
-    if (!confirm("确定解封？")) return;
-    let a = JSON.parse(localStorage.getItem("banRecord") || "[]");
-    a.splice(i, 1);
-    localStorage.setItem("banRecord", JSON.stringify(a));
-    loadBans();
-}
-
-function logout() {
-    localStorage.clear();
-    location.href = "login.html";
-}
-
-window.onload = function () {
-    loadAllNotices();
-    loadArticles();
-    loadRes();
-    loadUsers();
-    loadMessages();
-    loadBans();
-};
+window.onload=function(){loadAllNotices();loadArticles();loadRes();loadUsers();loadMessages();loadBans()}
 </script>
 </body>
 </html>

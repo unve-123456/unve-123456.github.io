@@ -94,7 +94,7 @@
             <div id="noticeList" class="list"></div>
         </div>
 
-        <!-- ====================== 其他功能保留不动 ====================== -->
+        <!-- ====================== 其他功能 ====================== -->
         <div class="panel">
             <h2>📝 文章管理</h2>
             <div id="articleList" class="list"></div>
@@ -124,13 +124,17 @@
     </div>
 
 <script>
-// ========================== 权限验证 ==========================
-if(localStorage.getItem("adminLogin") !== "true" || localStorage.getItem("loginUser") !== "【管理员】"){
-    alert("无权限！");
-    location.href = "login.html";
+// ========================== 【修复】管理员权限验证 ==========================
+function checkAdmin() {
+    let user = localStorage.getItem("loginUser");
+    if (!user || user.indexOf("管理员") === -1) {
+        alert("无权限访问！");
+        location.href = "login.html";
+    }
 }
+checkAdmin();
 
-// ========================== 【已修复】发布公告到线上 ==========================
+// ========================== 公告发布（线上可用） ==========================
 async function addNotice() {
     let content = document.getElementById("noticeContent").value.trim();
     if (!content) { alert("请输入公告内容！"); return; }
@@ -158,7 +162,6 @@ async function addNotice() {
     }
 }
 
-// 加载公告（从线上接口）
 async function loadNotices() {
     try {
         let res = await fetch("https://unve-api.onrender.com/api/get-announce");
@@ -179,7 +182,6 @@ async function loadNotices() {
     }
 }
 
-// 清空公告
 async function clearNotice() {
     if (!confirm("确定清空所有公告？")) return;
     try {
@@ -191,18 +193,18 @@ async function clearNotice() {
     }
 }
 
-// ========================== 以下原有功能不动 ==========================
+// ========================== 其他功能占位 ==========================
 function loadArticles() {}
 function loadRes() {}
 function loadUsers() {}
 function loadMessages() {}
 function loadBans() {}
+
 function logout() {
     localStorage.clear();
     location.href = "login.html";
 }
 
-// 页面加载时刷新公告
 window.onload = loadNotices;
 </script>
 </body>

@@ -16,127 +16,102 @@ button{background:#45a29e;color:#fff;border:none;padding:10px 20px;border-radius
 button:hover{background:#66fcf1;color:#000}
 .list{margin-top:15px;max-height:200px;overflow-y:auto}
 .item{padding:10px;background:#0b0c10;margin-bottom:8px;border-radius:5px;border-left:3px solid #45a29e}
-.auth-box{text-align:center;padding:30px;background:#1f2333;border-radius:10px;margin-bottom:20px}
-.auth-box input{width:200px;margin:10px 0}
+.auth-box{text-align:center;padding:40px;background:#1f2333;border-radius:10px;margin-bottom:20px}
 </style>
 </head>
 <body>
 
-<!-- 管理员口令验证（必须输入：我是管理员 才能进入） -->
-<div class="auth-box" id="authBox">
-    <h2>管理员验证</h2>
-    <p>请输入管理员口令</p>
-    <input type="text" id="adminKey" placeholder="输入口令">
+<!-- 安全验证：必须输入口令才能进 -->
+<div class="auth-box" id="verifyBox">
+    <h2>🔑 管理员安全验证</h2>
+    <p>请输入验证口令</p>
+    <input type="text" id="safeWord" placeholder="输入口令" style="width:220px;padding:10px;margin:10px 0">
     <br>
-    <button onclick="checkAdmin()">验证进入</button>
+    <button onclick="checkSafe()">验证并进入后台</button>
 </div>
 
-<!-- 后台功能（验证通过才显示） -->
-<div class="container" id="adminPanel" style="display:none">
+<div class="container" id="mainPanel" style="display:none">
 <div class="panel">
 <h2>📢 公告管理</h2>
 <input type="text" id="noticeContent" placeholder="输入公告内容">
-<button onclick="publishNotice()">发布公告</button>
-<button onclick="clearAllNotices()">清空公告</button>
+<button onclick="sendNotice()">发布公告</button>
+<button onclick="clearNotice()">清空公告</button>
 <div id="noticeList" class="list"></div>
 </div>
 
-<div class="panel"><h2>📝 文章管理</h2><div id="articleList" class="list"></div></div>
-<div class="panel"><h2>📁 资源管理</h2><div id="resList" class="list"></div></div>
-<div class="panel"><h2>👤 用户管理</h2><div id="userList" class="list"></div></div>
-<div class="panel"><h2>💬 留言管理</h2><div id="msgList" class="list"></div></div>
-<div class="panel"><h2>🚫 设备封禁管理</h2><div id="banList" class="list"></div></div>
+<div class="panel"><h2>📝 文章管理</h2><div id="articleList"></div></div>
+<div class="panel"><h2>📁 资源管理</h2><div id="resList"></div></div>
+<div class="panel"><h2>👤 用户管理</h2><div id="userList"></div></div>
+<div class="panel"><h2>💬 留言管理</h2><div id="msgList"></div></div>
+<div class="panel"><h2>🚫 封禁管理</h2><div id="banList"></div></div>
 
-<button onclick="logout()" style="background:#e74c3c;">退出登录</button>
+<button onclick="logout()" style="background:#e74c33;">退出登录</button>
 </div>
 
 <script>
-// ==========================
-// 第一层验证：必须登录 UNVE
-// ==========================
-let loginUser = localStorage.getItem("loginUser");
-if (!loginUser || loginUser !== "UNVE") {
-    alert("无权限！仅管理员可进入！");
+// ==========================================
+// ✅【完全适配你的 login.html】
+// 读取你登录页真正存储的字段！
+// ==========================================
+let isAdmin = localStorage.getItem("adminLogin");
+let isLogin = localStorage.getItem("loginStatus");
+
+// 必须是管理员登录才能进
+if (isAdmin !== "true") {
+    alert("无权限访问！仅管理员可进入！");
     location.href = "user.html";
 }
 
-// ==========================
-// 第二层验证：必须输入口令：我是管理员
-// ==========================
-function checkAdmin() {
-    let key = document.getElementById("adminKey").value.trim();
-    if (key === "我是管理员") {
-        document.getElementById("authBox").style.display = "none";
-        document.getElementById("adminPanel").style.display = "block";
+// 安全验证口令
+function checkSafe() {
+    let val = document.getElementById("safeWord").value.trim();
+    if (val === "我是管理员") {
+        document.getElementById("verifyBox").style.display = "none";
+        document.getElementById("mainPanel").style.display = "block";
         loadAll();
     } else {
-        alert("口令错误！");
+        alert("验证口令错误！");
     }
 }
 
 // ==========================
-// 公告功能（本地安全，不联网）
+// 功能正常
 // ==========================
-function publishNotice() {
+function sendNotice(){
     let c = document.getElementById("noticeContent").value.trim();
-    if (!c) { alert("请输入内容"); return; }
-    let arr = JSON.parse(localStorage.getItem("siteNotices") || "[]");
-    arr.unshift({
-        content: c,
-        user: loginUser,
-        time: new Date().toLocaleString()
-    });
-    localStorage.setItem("siteNotices", JSON.stringify(arr));
+    if(!c){alert("请输入内容");return}
+    let list = JSON.parse(localStorage.getItem("siteNotices")||"[]");
+    list.unshift({content:c,user:"UNVE",time:new Date().toLocaleString()});
+    localStorage.setItem("siteNotices",JSON.stringify(list));
     alert("发布成功！");
-    document.getElementById("noticeContent").value = "";
-    loadAllNotices();
+    document.getElementById("noticeContent").value="";
+    loadNotice();
 }
-
-function loadAllNotices() {
-    let arr = JSON.parse(localStorage.getItem("siteNotices") || "[]");
+function loadNotice(){
+    let list = JSON.parse(localStorage.getItem("siteNotices")||"[]");
     let h = "";
-    arr.forEach((it, i) => {
-        h += `<div class="item">${it.content}<br><small>${it.time} | ${it.user}</small><button onclick="delNotice(${i})">删除</button></div>`;
+    list.forEach((it,i)=>{
+        h+=`<div class="item">${it.content}<br><small>${it.time} ${it.user}</small><button onclick="delNotice(${i})">删除</button></div>`;
     });
-    document.getElementById("noticeList").innerHTML = h || "<p>暂无公告</p>";
+    document.getElementById("noticeList").innerHTML=h||"<p>暂无公告</p>";
 }
+function delNotice(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("siteNotices")||"[]");a.splice(i,1);localStorage.setItem("siteNotices",JSON.stringify(a));loadNotice()}
+function clearNotice(){if(!confirm("确定清空？"))return;localStorage.removeItem("siteNotices");loadNotice()}
 
-function delNotice(i) {
-    if (!confirm("确定删除？")) return;
-    let a = JSON.parse(localStorage.getItem("siteNotices") || "[]");
-    a.splice(i, 1);
-    localStorage.setItem("siteNotices", JSON.stringify(a));
-    loadAllNotices();
-}
-
-function clearAllNotices() {
-    if (!confirm("确定清空？")) return;
-    localStorage.removeItem("siteNotices");
-    loadAllNotices();
-}
-
-// ==========================
-// 全部管理功能
-// ==========================
 function loadArticles(){let a=JSON.parse(localStorage.getItem("articles")||"[]");let h="";a.forEach((it,i)=>{h+=`<div class="item">${it.title} | ${it.user}<button onclick="delArt(${i})">删除</button></div>`});document.getElementById("articleList").innerHTML=h||"<p>暂无文章</p>"}
 function delArt(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("articles")||"[]");a.splice(i,1);localStorage.setItem("articles",JSON.stringify(a));loadArticles()}
 function loadRes(){let a=JSON.parse(localStorage.getItem("resList")||"[]");let h="";a.forEach((it,i)=>{h+=`<div class="item">${it.title} | ${it.user}<button onclick="delRes(${i})">删除</button></div>`});document.getElementById("resList").innerHTML=h||"<p>暂无资源</p>"}
 function delRes(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("resList")||"[]");a.splice(i,1);localStorage.setItem("resList",JSON.stringify(a));loadRes()}
 function loadUsers(){let a=JSON.parse(localStorage.getItem("users")||"[]");let h="";a.forEach((it,i)=>{h+=`<div class="item">${it.user}<button onclick="delUser(${i})">删除</button></div>`});document.getElementById("userList").innerHTML=h||"<p>暂无用户</p>"}
 function delUser(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("users")||"[]");let n=a[i].user;a.splice(i,1);localStorage.setItem("users",JSON.stringify(a));localStorage.setItem("articles",JSON.stringify(JSON.parse(localStorage.getItem("articles")||"[]").filter(x=>x.user!=n)));localStorage.setItem("resList",JSON.stringify(JSON.parse(localStorage.getItem("resList")||"[]").filter(x=>x.user!=n)));loadUsers();loadArticles();loadRes()}
-function loadMessages(){let a=JSON.parse(localStorage.getItem("guestbook")||"[]");let h="";a.forEach((it,i)=>{h+=`<div class="item">${it.user} ${it.time}<br>${it.content} ${it.hidden?"【已撤回】":""}<button onclick="adminDelMsg(${i})">删除</button></div>`});document.getElementById("msgList").innerHTML=h||"<p>暂无留言</p>"}
-function adminDelMsg(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("guestbook")||"[]");a.splice(i,1);localStorage.setItem("guestbook",JSON.stringify(a));loadMessages()}
+function loadMessages(){let a=JSON.parse(localStorage.getItem("guestbook")||"[]");let h="";a.forEach((it,i)=>{h+=`<div class="item">${it.user} ${it.time}<br>${it.content}<button onclick="delMsg(${i})">删除</button></div>`});document.getElementById("msgList").innerHTML=h||"<p>暂无留言</p>"}
+function delMsg(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("guestbook")||"[]");a.splice(i,1);localStorage.setItem("guestbook",JSON.stringify(a));loadMessages()}
 function loadBans(){let a=JSON.parse(localStorage.getItem("banRecord")||"[]");let h="";a.forEach((it,i)=>{h+=`<div class="item">${it.devId} | ${it.banType}<button onclick="unban(${i})">解封</button></div>`});document.getElementById("banList").innerHTML=h||"<p>暂无封禁</p>"}
 function unban(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("banRecord")||"[]");a.splice(i,1);localStorage.setItem("banRecord",JSON.stringify(a));loadBans()}
 function logout(){localStorage.clear();location.href="login.html"}
 
-function loadAll() {
-    loadAllNotices();
-    loadArticles();
-    loadRes();
-    loadUsers();
-    loadMessages();
-    loadBans();
+function loadAll(){
+    loadNotice();loadArticles();loadRes();loadUsers();loadMessages();loadBans();
 }
 </script>
 </body>

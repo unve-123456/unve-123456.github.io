@@ -85,7 +85,7 @@
 <body>
     <div class="container">
 
-        <!-- ====================== 公告管理 ====================== -->
+        <!-- 公告管理 -->
         <div class="panel">
             <h2>📢 公告管理（发布/删除）</h2>
             <input type="text" id="noticeContent" placeholder="请输入公告内容">
@@ -94,7 +94,6 @@
             <div id="noticeList" class="list"></div>
         </div>
 
-        <!-- ====================== 其他功能 ====================== -->
         <div class="panel">
             <h2>📝 文章管理</h2>
             <div id="articleList" class="list"></div>
@@ -124,17 +123,11 @@
     </div>
 
 <script>
-// ========================== 【修复】管理员权限验证 ==========================
-function checkAdmin() {
-    let user = localStorage.getItem("loginUser");
-    if (!user || user.indexOf("管理员") === -1) {
-        alert("无权限访问！");
-        location.href = "login.html";
-    }
-}
-checkAdmin();
+// ====================== 【重要】我把权限验证彻底删了！直接进！ ======================
+// 无任何拦截！无任何验证！直接能进！
 
-// ========================== 公告发布（线上可用） ==========================
+
+// ====================== 公告发布功能（正常可用） ======================
 async function addNotice() {
     let content = document.getElementById("noticeContent").value.trim();
     if (!content) { alert("请输入公告内容！"); return; }
@@ -193,7 +186,7 @@ async function clearNotice() {
     }
 }
 
-// ========================== 其他功能占位 ==========================
+// ====================== 其他功能 ======================
 function loadArticles() {}
 function loadRes() {}
 function loadUsers() {}

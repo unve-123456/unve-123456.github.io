@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<link rel="stylesheet" href="theme-random.css">
+<script>
+const t=["theme1","theme2","theme3"];
+document.documentElement.className=t[Math.floor(Math.random()*3)];
+</script>
+<iframe src="safe.html" style="display:none;width:0;height:0;border:0;"></iframe>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>好友·私聊·群聊 中心</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body{background:#0b0c10;color:#fff;margin:0;padding:15px;font-family:system-ui;}
+.wrap{max-width:700px;margin:0 auto;}
+.box{background:#1f2833;padding:20px;border-radius:12px;border:1px solid #45a29e;margin-bottom:15px;}
+h3{color:#66fcf1;text-align:center;margin:0 0 15px 0;}
+
+/* 搜索栏 */
+.search-bar{display:flex;gap:10px;margin-bottom:15px;}
+#searchInput{flex:1;padding:10px;background:#0b0c10;border:1px solid #444;border-radius:6px;color:#fff;}
+button{padding:9px 14px;background:#45a29e;border:none;border-radius:6px;cursor:pointer;font-weight:bold;color:#000;}
+.del-btn{background:#c82a2a;color:#fff;}
+
+/* 标签页 */
+.tabs{display:flex;border-bottom:1px solid #444;margin-bottom:15px;}
+.tab{flex:1;text-align:center;padding:10px;cursor:pointer;}
+.tab.active{border-bottom:2px solid #66fcf1;color:#66fcf1;}
+
+/* 列表项 */
+.item{padding:12px;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;}
+
+/* 聊天窗口 */
+.chat-box{margin-top:15px;}
+.chat-title{background:#253040;padding:12px;text-align:center;color:#66fcf1;border-radius:8px 8px 0 0;}
+.chat-content{height:380px;overflow:auto;background:#141a24;padding:15px;border:1px solid #45a29e;border-top:none;}
+.you{text-align:left;margin:8px 0;}
+.me{text-align:right;margin:8px 0;}
+.you span{background:#2a3544;padding:6px 10px;border-radius:6px;display:inline-block;}
+.me span{background:#45a29e;color:#000;padding:6px 10px;border-radius:6px;display:inline-block;}
+.group-name{color:#66fcf1;font-size:14px;margin-bottom:4px;}
+.send-bar{display:flex;padding:12px;background:#1f2833;border:1px solid #45a29e;border-radius:0 0 8px 8px;margin-top:-1px;}
+#msgInput{flex:1;padding:10px;background:#0b0c10;border:1px solid #444;color:#fff;border-radius:6px;}
+
+/* 隐藏模块 */
+.hide{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="box">
+        <h3>好友 / 私聊 / 群聊</h3>
+
+        <div class="search-bar">
+            <input id="searchInput" placeholder="搜索用户名...">
+            <button onclick="searchUser()">搜索</button>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab(0)">可添加用户</div>
+            <div class="tab" onclick="switchTab(1)">我的好友</div>
+            <div class="tab" onclick="switchTab(2)">我的群聊</div>
+        </div>
+
+        <div id="listBox"></div>
+    </div>
+
+    <!-- 统一聊天窗口（私聊+群聊共用） -->
+    <div class="box chat-box hide" id="chatModule">
+        <div class="chat-title" id="chatTitle">私聊窗口</div>
+        <div class="chat-content" id="chatContent"></div>
+        <div class="send-bar">
+            <input id="msgInput" placeholder="输入消息...">
+            <button onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+</div>
+
+<script>
+if(!localStorage.getItem("loginUser")){location.href="login.html";}
+const me = localStorage.getItem("loginUser");
+let currentTab = 0;
+let chatType = "";   // private / group
+let chatTarget = ""; // 私聊对方 或 群聊索引
+
+// 初始化
+window.onload = function(){
+    switchTab(0);
+    // 回车发送
+    document.getElementById("msgInput").addEventListener("keydown",e=>{
+        if(e.key === "Enter") sendMessage();
+    });
+    // 自动刷新聊天
+    setInterval(refreshChat,3000);
+};
+
+// 切换标签
+function switchTab(idx){
+    currentTab = idx;
+    document.querySelectorAll(".tab").forEach((el,i)=>{
+        el.classList.toggle("active",i===idx);
+    });
+    document.getElementById("chatModule").classList.add("hide");
+    if(idx===0) renderAllUser();
+    if(idx===1) renderFriend();
+    if(idx===2) renderGroup();
+}
+
+// 获取全部用户(含管理员)
+function getAllUser(){
+    let users = JSON.parse(localStorage.getItem("users")||[]).map(x=>x.user);
+    users.push("【管理员】");
+    return [...new Set(users)].filter(u=>u!==me);
+}
+
+// 渲染可添加用户
+function renderAllUser(list=null){
+    let arr = list || getAllUser();
+    let html = "";
+    arr.forEach(name=>{
+        let friendList = JSON.parse(localStorage.getItem("friendList_"+me)||[]);
+        let isFriend = friendList.includes(name);
+        html += `
+        <div class="item">
+            <span>${name}</span>
+            <div>
+                ${isFriend 
+                    ? `<button onclick="openPrivateChat('${name}')">私聊</button>`
+                    : `<button onclick="addFriend('${name}')">加好友</button>`
+                }
+            </div>
+        </div>
+        `;
+    });
+    document.getElementById("listBox").innerHTML = html || "无用户";
+}
+
+// 搜索用户
+function searchUser(){
+    let key = document.getElementById("searchInput").value.trim();
+    if(!key){renderAllUser();return;}
+    let all = getAllUser();
+    let res = all.filter(u=>u.includes(key));
+    renderAllUser(res);
+}
+
+// 加好友
+function addFriend(name){
+    let key = "friendList_"+me;
+    let list = JSON.parse(localStorage.getItem(key)||[]);
+    if(!list.includes(name)){
+        list.push(name);
+        localStorage.setItem(key,JSON.stringify(list));
+        alert("已添加好友："+name);
+    }
+    switchTab(0);
+}
+
+// 渲染好友
+function renderFriend(){
+    let list = JSON.parse(localStorage.getItem("friendList_"+me)||[]);
+    let html = "";
+    list.forEach(name=>{
+        html += `
+        <div class="item">
+            <span>${name}</span>
+            <button onclick="openPrivateChat('${name}')">发起私聊</button>
+        </div>
+        `;
+    });
+    document.getElementById("listBox").innerHTML = html || "暂无好友";
+}
+
+// 渲染群聊
+function renderGroup(){
+    let groupList = JSON.parse(localStorage.getItem("groupList_"+me)||[]);
+    let html = "";
+    groupList.forEach((g,idx)=>{
+        html += `
+        <div class="item">
+            <span>${g.name}（${g.member.length}/8人）</span>
+            <button onclick="openGroupChat(${idx})">进入群聊</button>
+        </div>
+        `;
+    });
+    html += `<div style="text-align:center;padding:15px;"><button onclick="createGroup()">新建群聊(最多8人)</button></div>`;
+    document.getElementById("listBox").innerHTML = html || "暂无群聊";
+}
+
+// 建群 限制8人
+function createGroup(){
+    let friendList = JSON.parse(localStorage.getItem("friendList_"+me)||[]);
+    if(friendList.length < 1){
+        alert("至少1位好友才可建群");
+        return;
+    }
+    let gName = prompt("输入群聊名称：");
+    if(!gName) return;
+    let member = [me,...friendList.slice(0,7)];
+    let newGroup = {name:gName, member:member};
+    let groupArr = JSON.parse(localStorage.getItem("groupList_"+me)||[]);
+    groupArr.push(newGroup);
+    localStorage.setItem("groupList_"+me,JSON.stringify(groupArr));
+    alert("群聊创建成功！");
+    switchTab(2);
+}
+
+// 打开私聊窗口
+function openPrivateChat(name){
+    chatType = "private";
+    chatTarget = name;
+    document.getElementById("chatTitle").innerText = "与 "+name+" 私聊";
+    document.getElementById("chatModule").classList.remove("hide");
+    refreshChat();
+}
+
+// 打开群聊窗口
+function openGroupChat(idx){
+    chatType = "group";
+    chatTarget = idx;
+    let groupList = JSON.parse(localStorage.getItem("groupList_"+me)||[]);
+    let g = groupList[idx];
+    document.getElementById("chatTitle").innerText = g.name + " 群聊("+g.member.length+"/8)";
+    document.getElementById("chatModule").classList.remove("hide");
+    refreshChat();
+}
+
+// 刷新聊天内容
+function refreshChat(){
+    if(chatType === "private"){
+        renderPrivateChat();
+    }else if(chatType === "group"){
+        renderGroupChat();
+    }
+}
+
+// 私聊渲染
+function renderPrivateChat(){
+    let target = chatTarget;
+    let key = me > target ? me+"_"+target : target+"_"+me;
+    let record = JSON.parse(localStorage.getItem("chat_"+key)||[]);
+    let html = "";
+    record.forEach(item=>{
+        html += item.from===me
+            ? `<div class="me"><span>${item.msg}</span></div>`
+            : `<div class="you"><span>${item.msg}</span></div>`;
+    });
+    document.getElementById("chatContent").innerHTML = html;
+    document.getElementById("chatContent").scrollTop = document.getElementById("chatContent").scrollHeight;
+}
+
+// 群聊渲染
+function renderGroupChat(){
+    let groupList = JSON.parse(localStorage.getItem("groupList_"+me)||[]);
+    let g = groupList[chatTarget];
+    let record = JSON.parse(localStorage.getItem("groupChat_"+g.name)||[]);
+    let html = "";
+    record.forEach(item=>{
+        html += `
+        <div class="you">
+            <div class="group-name">${item.from}</div>
+            <span>${item.msg}</span>
+        </div>
+        `;
+    });
+    document.getElementById("chatContent").innerHTML = html;
+    document.getElementById("chatContent").scrollTop = document.getElementById("chatContent").scrollHeight;
+}
+
+// 发送消息统一入口
+function sendMessage(){
+    let msg = document.getElementById("msgInput").value.trim();
+    if(!msg) return;
+    if(chatType === "private"){
+        sendPrivateMsg(msg);
+    }else{
+        sendGroupMsg(msg);
+    }
+    document.getElementById("msgInput").value = "";
+    refreshChat();
+}
+
+// 发送私聊消息
+function sendPrivateMsg(msg){
+    let target = chatTarget;
+    let key = me > target ? me+"_"+target : target+"_"+me;
+    let record = JSON.parse(localStorage.getItem("chat_"+key)||[]);
+    record.push({from:me, to:target, msg:msg, time:new Date().toLocaleString()});
+    localStorage.setItem("chat_"+key,JSON.stringify(record));
+}
+
+// 发送群聊消息
+function sendGroupMsg(msg){
+    let groupList = JSON.parse(localStorage.getItem("groupList_"+me)||[]);
+    let g = groupList[chatTarget];
+    let record = JSON.parse(localStorage.getItem("groupChat_"+g.name)||[]);
+    record.push({from:me, msg:msg, time:new Date().toLocaleString()});
+    localStorage.setItem("groupChat_"+g.name,JSON.stringify(record));
+}
+</script>
+</body>
+</html>

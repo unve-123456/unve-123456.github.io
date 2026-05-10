@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理中心</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:#0b0c10;color:#c5c5c5;font-family:system-ui;}
+    header{background:#1f2833;padding:20px;border-bottom:1px solid #45a29e;text-align:center;}
+    header h1{color:#66fcf1;}
+    nav{margin-top:10px;}
+    nav a{color:#c5c5c5;margin:0 10px;text-decoration:none;}
+    .container{max-width:900px;margin:30px auto;padding:0 20px;}
+    .panel{background:#1f2833;padding:20px;border-radius:10px;margin-bottom:20px;border:1px solid #45a29e;}
+    .panel h3{color:#66fcf1;margin-bottom:15px;}
+    textarea{width:100%;padding:12px;background:#222;color:#fff;border:1px solid #444;border-radius:6px;margin:10px 0;min-height:100px;}
+    button{padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:6px;background:#45a29e;border:none;}
+    .del-btn{background:#c82a2a;color:#fff;border:none;padding:4px 8px;border-radius:4px;margin-left:10px;}
+    .item{padding:10px 0;border-bottom:1px solid #444;}
+</style>
+<iframe src="safe.html" style="display:none;width:0;height:0;border:0;"></iframe>
+</head>
+<body>
+
+<header>
+    <h1>管理员中心</h1>
+    <nav>
+        <a href="index.html">首页</a>
+        <a href="javascript:logout()">退出登录</a>
+    </nav>
+</header>
+
+<div class="container">
+    <div class="panel">
+        <h3>📢 公告管理</h3>
+        <textarea id="noticeText" placeholder="输入公告"></textarea>
+        <button onclick="addNotice()">发布公告</button>
+        <button onclick="clearNotice()">清空公告</button>
+        <div id="noticeList"></div>
+    </div>
+
+    <div class="panel">
+        <h3>📰 文章管理</h3>
+        <div id="articleManageList"></div>
+    </div>
+
+    <div class="panel">
+        <h3>📁 资源管理</h3>
+        <div id="resManageList"></div>
+    </div>
+
+    <div class="panel">
+        <h3>👤 用户管理（可删账号）</h3>
+        <div id="userList"></div>
+    </div>
+
+    <!-- 👇 管理员留言管理 自动显示所有留言 -->
+    <div class="panel">
+        <h3>📩 留言管理（可删任意）</h3>
+        <div id="messageList"></div>
+    </div>
+
+    <div class="panel">
+        <h3>🚫 设备封禁管理</h3>
+        <div id="banList"></div>
+    </div>
+</div>
+
+<script>
+// ======================
+// 管理员权限验证
+// ======================
+if(!localStorage.getItem("adminLogin") || localStorage.getItem("loginUser") !== "【管理员】"){
+    location.href = "login.html";
+}
+
+// 退出
+function logout(){
+    if(!confirm("确定退出？")) return;
+    localStorage.removeItem("adminLogin");
+    localStorage.removeItem("loginUser");
+    location.href = "login.html";
+}
+
+// ======================
+// 公告
+// ======================
+function addNotice(){
+    let t = document.getElementById("noticeText").value.trim();
+    if(!t) return alert("不能为空");
+    let list = JSON.parse(localStorage.getItem("siteNotices")||[]);
+    list.unshift({content:t,user:"【管理员】",time:new Date().toLocaleString()});
+    localStorage.setItem("siteNotices",JSON.stringify(list));
+    document.getElementById("noticeText").value="";
+    loadNotices();
+}
+function loadNotices(){
+    let list = JSON.parse(localStorage.getItem("siteNotices")||[]);
+    let h="";
+    list.forEach((item,i)=>{
+        h+=`<div class="item">${item.time} ${item.user}：${item.content} <button class="del-btn" onclick="delNotice(${i})">删除</button></div>`;
+    });
+    document.getElementById("noticeList").innerHTML=h||"暂无公告";
+}
+function delNotice(i){
+    if(!confirm("确定删除？")) return;
+    let list=JSON.parse(localStorage.getItem("siteNotices")||[]);
+    list.splice(i,1);
+    localStorage.setItem("siteNotices",JSON.stringify(list));
+    loadNotices();
+}
+function clearNotice(){
+    if(!confirm("清空所有公告？")) return;
+    localStorage.removeItem("siteNotices");
+    loadNotices();
+}
+
+// ======================
+// 文章
+// ======================
+function loadArticles(){
+    let list=JSON.parse(localStorage.getItem("articles")||[]);
+    let h="";
+    list.forEach((item,i)=>{
+        h+=`<div class="item">${item.title} | ${item.user} <button class="del-btn" onclick="delArt(${i})">删除文章</button></div>`;
+    });
+    document.getElementById("articleManageList").innerHTML=h||"暂无文章";
+}
+function delArt(i){
+    if(!confirm("删除文章？")) return;
+    let list=JSON.parse(localStorage.getItem("articles")||[]);
+    list.splice(i,1);
+    localStorage.setItem("articles",JSON.stringify(list));
+    loadArticles();
+}
+
+// ======================
+// 资源
+// ======================
+function loadRes(){
+    let list=JSON.parse(localStorage.getItem("resList")||[]);
+    let h="";
+    list.forEach((item,i)=>{
+        h+=`<div class="item">${item.title} | ${item.user} <button class="del-btn" onclick="delRes(${i})">删除</button></div>`;
+    });
+    document.getElementById("resManageList").innerHTML=h||"暂无资源";
+}
+function delRes(i){
+    if(!confirm("删除资源？")) return;
+    let list=JSON.parse(localStorage.getItem("resList")||[]);
+    list.splice(i,1);
+    localStorage.setItem("resList",JSON.stringify(list));
+    loadRes();
+}
+
+// ======================
+// 用户删除
+// ======================
+function loadUsers(){
+    let list=JSON.parse(localStorage.getItem("users")||[]);
+    let h="";
+    list.forEach((item,i)=>{
+        h+=`<div class="item">${item.user} <button class="del-btn" onclick="delUser(${i})">删除账号</button></div>`;
+    });
+    document.getElementById("userList").innerHTML=h||"暂无用户";
+}
+function delUser(i){
+    if(!confirm("确定删除此用户？数据不可恢复！")) return;
+    let users=JSON.parse(localStorage.getItem("users")||[]);
+    let name=users[i].user;
+    users.splice(i,1);
+    localStorage.setItem("users",JSON.stringify(users));
+
+    let arts=JSON.parse(localStorage.getItem("articles")||[]);
+    arts=arts.filter(a=>a.user!==name);
+    localStorage.setItem("articles",JSON.stringify(arts));
+
+    let res=JSON.parse(localStorage.getItem("resList")||[]);
+    res=res.filter(r=>r.user!==name);
+    localStorage.setItem("resList",JSON.stringify(res));
+
+    alert("删除成功");
+    loadUsers();
+    loadArticles();
+    loadRes();
+}
+
+// ======================
+// ✅ 管理员 留言管理（完整显示）
+// ======================
+function loadMessages(){
+    let list = JSON.parse(localStorage.getItem("guestbook") || []);
+    let h = "";
+    list.forEach((item, i)=>{
+        let status = item.hidden ? "【已撤回】" : "";
+        h += `
+        <div class="item">
+            ${item.user} ${status} | ${item.time}<br>
+            ${item.content}
+            <button class="del-btn" onclick="adminDelMsg(${i})">删除</button>
+        </div>`;
+    });
+    document.getElementById("messageList").innerHTML = h || "暂无留言";
+}
+
+// 管理员删除留言（永久删除）
+function adminDelMsg(i){
+    if(!confirm("永久删除该留言？")) return;
+    let list = JSON.parse(localStorage.getItem("guestbook") || []);
+    list.splice(i, 1);
+    localStorage.setItem("guestbook", JSON.stringify(list));
+    loadMessages();
+}
+
+// ======================
+// 封禁
+// ======================
+function loadBans(){
+    let arr=JSON.parse(localStorage.getItem("banRecord")||[]);
+    let html="";
+    arr.forEach((item,idx)=>{
+        let t=item.banType==="year"?"封禁1年":"永久封禁";
+        html+=`<div class="item">设备：${item.devId}｜${t} <button class="del-btn" onclick="unban(${idx})">解封</button></div>`;
+    });
+    document.getElementById("banList").innerHTML=html||"暂无封禁记录";
+}
+function unban(idx){
+    if(!confirm("确定解封？")) return;
+    let arr=JSON.parse(localStorage.getItem("banRecord")||[]);
+    arr.splice(idx,1);
+    localStorage.setItem("banRecord",JSON.stringify(arr));
+    loadBans();
+}
+
+// 加载所有
+loadNotices();
+loadArticles();
+loadRes();
+loadUsers();
+loadMessages(); // ✅ 留言加载
+loadBans();
+</script>
+</body>
+</html>

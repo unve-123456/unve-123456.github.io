@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<iframe src="safe.html" style="display:none;width:0;height:0;border:0;"></iframe>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用户注册 - unveweb</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <div class="container header-inner">
+        <div class="logo">unveweb</div>
+        <nav>
+            <a href="index.html">返回首页</a>
+        </nav>
+    </div>
+</header>
+
+<div class="container">
+    <div class="box" style="max-width:400px;margin:80px auto;">
+        <h3 style="text-align:center;">用户注册</h3>
+        <input id="user" placeholder="用户名">
+        <input id="pwd" placeholder="密码（至少6位）">
+        <button onclick="register()">注册</button>
+    </div>
+</div>
+
+<footer>
+    unveweb © 2026 UNVE COMPUTER
+</footer>
+
+<script>
+const ONE_YEAR = 31536000000;
+
+function getDeviceId() {
+    const base = [
+        navigator.userAgent,
+        navigator.language,
+        screen.width,
+        screen.height,
+        screen.colorDepth,
+        new Date().getTimezoneOffset()
+    ].join('|');
+
+    function rand20() {
+        const set = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()-_=+[]{}';
+        let r = '';
+        for (let i = 0; i < 20; i++) {
+            r += set[Math.floor(Math.random() * set.length)];
+        }
+        return r;
+    }
+
+    const baseArr = base.split('');
+    const insertPos = Math.floor(Math.random() * baseArr.length);
+    baseArr.splice(insertPos, 0, rand20());
+    const finalStr = baseArr.join('');
+
+    let hash = 0;
+    for (let i = 0; i < finalStr.length; i++) {
+        hash = ((hash << 5) - hash) + finalStr.charCodeAt(i);
+        hash = hash & hash;
+    }
+    return "DEV_" + Math.abs(hash).toString(16);
+}
+
+const deviceId = getDeviceId();
+
+async function getIp() {
+    try {
+        let res = await fetch("https://api.ip.sb/geoip");
+        let data = await res.json();
+        return data.ip;
+    } catch (e) {
+        return "0.0.0.0";
+    }
+}
+
+let banRecord = JSON.parse(localStorage.getItem("banRecord") || "[]");
+let devBindUser = JSON.parse(localStorage.getItem("devBindUser") || "{}");
+let ipRegCount = JSON.parse(localStorage.getItem("ipRegCount") || "{}");
+let reqCount = 0;
+const maxReq = 3;
+
+function checkDeviceBan() {
+    let now = Date.now();
+    let idx = banRecord.findIndex(x => x.devId === deviceId);
+    if (idx === -1) return null;
+    let item = banRecord[idx];
+    if (item.banType === "forever") return "forever";
+    if (now - item.banTime < ONE_YEAR) return "year";
+    banRecord.splice(idx, 1);
+    localStorage.setItem("banRecord", JSON.stringify(banRecord));
+    return null;
+}
+
+function setDeviceBan(type) {
+    banRecord = banRecord.filter(x => x.devId !== deviceId);
+    banRecord.push({ devId: deviceId, banType: type, banTime: Date.now() });
+    localStorage.setItem("banRecord", JSON.stringify(banRecord));
+}
+
+async function register() {
+    let ip = await getIp();
+    let banStatus = checkDeviceBan();
+
+    if (banStatus === "forever") {
+        alert("当前设备已永久封禁，禁止注册");
+        return;
+    }
+    if (banStatus === "year") {
+        alert("当前设备处于1年封禁期，暂时无法注册");
+        return;
+    }
+
+    if (devBindUser[deviceId]) {
+        alert("当前设备已注册过账号，每台设备仅限1个账号");
+        return;
+    }
+
+    if (!ipRegCount[ip]) ipRegCount[ip] = 0;
+    if (ipRegCount[ip] >= 5) {
+        alert("当前网络注册账号过多，请更换网络");
+        return;
+    }
+
+    reqCount++;
+    if (reqCount > maxReq) {
+        let hasYearBan = banRecord.some(x => x.devId === deviceId && x.banType === "year");
+        if (hasYearBan) {
+            setDeviceBan("forever");
+            alert("多次恶意刷注册，设备已永久封禁");
+        } else {
+            setDeviceBan("year");
+            alert("恶意频繁注册，设备封禁1年");
+        }
+        return;
+    }
+
+    let u = document.getElementById("user").value.trim();
+    let p = document.getElementById("pwd").value.trim();
+    if (!u || !p) {
+        alert("用户名和密码不能为空");
+        return;
+    }
+    if (p.length < 6) {
+        alert("密码至少6位");
+        return;
+    }
+
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
+    if (users.find(i => i.user === u)) {
+        alert("用户名已存在");
+        return;
+    }
+
+    users.push({ user: u, pwd: p });
+    localStorage.setItem("users", JSON.stringify(users));
+    devBindUser[deviceId] = u;
+    localStorage.setItem("devBindUser", JSON.stringify(devBindUser));
+    ipRegCount[ip] += 1;
+    localStorage.setItem("ipRegCount", JSON.stringify(ipRegCount));
+
+    alert("注册成功！请登录");
+    location.href = "login.html";
+}
+</script>
+</body>
+</html>

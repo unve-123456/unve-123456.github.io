@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<link rel="stylesheet" href="theme-random.css">
+<script>
+const t=["theme1","theme2","theme3"];
+document.documentElement.className=t[Math.floor(Math.random()*3)];
+</script>
+<iframe src="safe.html" style="display:none;width:0;height:0;border:0;"></iframe>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>资源下载中心 - unveweb</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <div class="container header-inner">
+        <div class="logo">unveweb</div>
+        <nav>
+            <a href="index.html">首页</a>
+            <a href="download.html">资源下载</a>
+            <a href="upload.html">我要上传</a>
+            <a href="login.html">登录/注册</a>
+            <a href="control.html">管理入口</a>
+        </nav>
+    </div>
+</header>
+
+<div class="container">
+    <div class="panel">
+        <h2>📥 资源下载中心</h2>
+        <p>文章 / 程序 / 工具 / 资源分享</p>
+    </div>
+
+    <div id="resContainer"></div>
+</div>
+
+<footer>
+    unveweb © 2026 UNVE COMPUTER
+</footer>
+
+<script>
+// 判断是否管理员登录
+function isAdmin(){
+    return localStorage.getItem("adminLogin") === "ok";
+}
+
+function loadRes(){
+    let list = JSON.parse(localStorage.getItem("resList") || "[]");
+    let box = document.getElementById("resContainer");
+    let html = "";
+
+    if(list.length === 0){
+        html = `<div class="panel">暂无资源，快来上传分享～</div>`;
+        box.innerHTML = html;
+        return;
+    }
+
+    list.forEach((item,idx)=>{
+        html += `
+        <div class="panel">
+            <h3 style="margin-bottom:8px;">${item.title}</h3>
+            <p><strong>作者：</strong>${item.author}</p>
+            <p><strong>版本：</strong>${item.version || "无"}</p>
+            <p><strong>分享者：</strong><span style="color:#66fcf1;">${item.user}</span></p>
+            <p><strong>分享时间：</strong>${item.time}</p>
+            <hr style="margin:12px 0;border-color:#444;">
+            <p><strong>资源介绍：</strong></p>
+            <p style="white-space:pre-wrap;">${item.intro}</p>
+            <hr style="margin:12px 0;border-color:#444;">
+            <p><strong>下载链接：</strong> <a href="${item.link}" target="_blank" style="color:#66fcf1;">点击下载</a></p>
+            <p><strong>提取码：</strong> <span style="color:#fff;background:#c0392b;padding:2px 6px;border-radius:4px;">${item.pwd || "无"}</span></p>
+            ${isAdmin() ? `<button class="del-btn" style="margin-top:15px;" onclick="delRes(${idx})">管理员：删除此资源</button>` : ""}
+        </div>
+        `;
+    });
+
+    box.innerHTML = html;
+}
+
+// 管理员删除资源
+function delRes(idx){
+    if(!confirm("确定要删除该资源？不可恢复！")) return;
+    let list = JSON.parse(localStorage.getItem("resList") || "[]");
+    list.splice(idx,1);
+    localStorage.setItem("resList", JSON.stringify(list));
+    loadRes();
+    alert("已删除该资源");
+}
+
+loadRes();
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!-- 网页全能安全增强模块 -->
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-XSS-Protection" content="1; mode=block">
+<meta http-equiv="Cache-Control" content="no-store">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow">
+
+<script>
+// 禁止右键、禁止选择、禁止复制、禁止剪切
+document.oncontextmenu = () => false;
+document.onselectstart = () => false;
+document.oncopy = () => false;
+document.oncut = () => false;
+
+// 禁用 F12 / Ctrl+U / Ctrl+Shift+I / Ctrl+S
+document.addEventListener('keydown', e => {
+  const forbidden = [
+    e.key === 'F12',
+    e.ctrlKey && e.key.toLowerCase() === 'u',
+    e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'i',
+    e.ctrlKey && e.key.toLowerCase() === 's'
+  ];
+  if (forbidden.some(Boolean)) e.preventDefault();
+});
+
+// 检测开发者工具 → 自动屏蔽页面
+setInterval(() => {
+  if (window.outerWidth - window.innerWidth > 120 ||
+      window.outerHeight - window.innerHeight > 120) {
+    document.body.innerHTML = `<h1 style='color:red;text-align:center;margin-top:100px;'>⚠️ 禁止调试 & 禁止查看源码</h1>`;
+  }
+}, 800);
+
+// 强制 debugger 拦截调试
+setInterval(() => { debugger; }, 1000);
+</script>

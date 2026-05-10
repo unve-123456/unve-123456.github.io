@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<link rel="stylesheet" href="theme-random.css">
+<script>
+const t=["theme1","theme2","theme3"];
+document.documentElement.className=t[Math.floor(Math.random()*3)];
+</script>
+<iframe src="safe.html" style="display:none;width:0;height:0;border:0;"></iframe>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>上传资源 - unveweb</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <div class="container header-inner">
+        <div class="logo">unveweb</div>
+        <nav>
+            <a href="index.html">首页</a>
+            <a href="download.html">资源下载</a>
+            <a href="user.html">用户中心</a>
+            <a href="javascript:logout()">退出登录</a>
+        </nav>
+    </div>
+</header>
+
+<div class="container">
+    <div class="panel" style="max-width:700px;margin:30px auto;">
+        <h2>📤 上传资源</h2>
+        <p style="margin-bottom:10px;">分享你的文章、工具、代码、资源</p>
+
+        <input type="text" id="resTitle" placeholder="资源标题（如：Windows激活工具）">
+        <input type="text" id="resAuthor" placeholder="作者/分享者">
+        <input type="text" id="resVersion" placeholder="版本（选填）">
+        <textarea id="resIntro" rows="4" placeholder="资源介绍、使用说明..."></textarea>
+
+        <input type="text" id="resLink" placeholder="百度网盘/蓝奏云/直链 下载链接">
+        <input type="text" id="resPwd" placeholder="提取码（没有则留空）">
+
+        <button style="width:100%;margin-top:10px;" onclick="uploadRes()">✅ 确认上传发布</button>
+    </div>
+</div>
+
+<footer>
+    unveweb © 2026 UNVE COMPUTER
+</footer>
+
+<script>
+// 必须登录才能上传
+if(!localStorage.getItem("loginUser")){
+    alert("请先登录！");
+    location.href="login.html";
+}
+
+function uploadRes(){
+    let title = document.getElementById("resTitle").value.trim();
+    let author = document.getElementById("resAuthor").value.trim();
+    let version = document.getElementById("resVersion").value.trim();
+    let intro = document.getElementById("resIntro").value.trim();
+    let link = document.getElementById("resLink").value.trim();
+    let pwd = document.getElementById("resPwd").value.trim();
+    let user = localStorage.getItem("loginUser");
+
+    if(!title || !author || !intro || !link){
+        alert("请填写完整信息！");
+        return;
+    }
+
+    let list = JSON.parse(localStorage.getItem("resList") || "[]");
+    list.unshift({
+        title,author,version,intro,link,pwd,user,time:new Date().toLocaleString()
+    });
+
+    localStorage.setItem("resList", JSON.stringify(list));
+    alert("上传发布成功！");
+    location.href="download.html";
+}
+
+function logout(){
+    localStorage.removeItem("loginUser");
+    location.href="login.html";
+}
+</script>
+</body>
+</html>

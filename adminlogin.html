@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<iframe src="safe.html" style="display:none;width:0;height:0;border:0;"></iframe>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理员登录</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    .login-box{max-width:400px;margin:80px auto;background:#1f2833;padding:30px;border-radius:12px;border:1px solid #45a29e;}
+    .login-box h3{color:#66fcf1;text-align:center;margin-bottom:20px;}
+    input{width:100%;padding:12px;margin:8px 0;border-radius:6px;background:#0b0c10;color:#fff;border:1px solid #444;}
+    button{width:100%;padding:12px;background:#45a29e;color:#000;font-weight:bold;border:none;border-radius:6px;margin-top:10px;cursor:pointer;}
+    .back-btn{background:#333;color:#fff;margin-top:8px;}
+</style>
+</head>
+<body style="background:#0b0c10;color:#fff;margin:0;font-family:system-ui;">
+
+<div class="login-box">
+    <h3>管理员专属登录</h3>
+    <input id="adminUser" placeholder="管理员账号">
+    <input id="adminPwd" type="password" placeholder="管理员密码">
+    <button onclick="adminLogin()">登录管理中心</button>
+    <button class="back-btn" onclick="location.href='index.html'">返回首页</button>
+</div>
+
+<script>
+// 管理员固定账号密码
+const ADMIN_USER = "UNVE";
+const ADMIN_PWD = "123456";
+
+// 已任意登录：弹窗提醒 + 禁止重进
+if(localStorage.getItem("loginUser") || localStorage.getItem("adminLogin")){
+    alert("⚠️ 你已登录账号，无需再次登录管理员！");
+    location.href = "index.html";
+}
+
+// 管理员登录逻辑
+function adminLogin(){
+    let u = document.getElementById("adminUser").value.trim();
+    let p = document.getElementById("adminPwd").value.trim();
+
+    if(u === ADMIN_USER && p === ADMIN_PWD){
+        localStorage.setItem("loginUser","【管理员】");
+        localStorage.setItem("adminLogin","ok");
+        location.href = "control.html";
+    }else{
+        alert("管理员账号或密码错误！");
+    }
+}
+</script>
+
+</body>
+</html>

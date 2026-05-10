@@ -1,0 +1,31 @@
+<script>
+// 禁用右键菜单
+document.oncontextmenu = function(){return false;};
+// 禁止选中
+document.onselectstart = function(){return false;};
+// 禁止复制
+document.oncopy = function(){return false;};
+// 禁止剪切
+document.oncut = function(){return false;};
+
+// 屏蔽 F12 Ctrl+U Ctrl+Shift+I Ctrl+S
+document.addEventListener('keydown',function(e){
+    if(e.key === 'F12'
+    || (e.ctrlKey && e.key.toLowerCase() === 'u')
+    || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'i')
+    || (e.ctrlKey && e.key.toLowerCase() === 's')){
+        e.preventDefault();
+        return false;
+    }
+});
+
+// 检测开发者工具，打开即屏蔽页面
+function checkDevTools(){
+    let w = window.outerWidth - window.innerWidth > 120;
+    let h = window.outerHeight - window.innerHeight > 120;
+    if(w || h){
+        document.body.innerHTML = '<div style="text-align:center;padding:50px;font-size:20px;color:red;">禁止查看源码与调试</div>';
+    }
+}
+setInterval(checkDevTools,800);
+</script>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<link rel="stylesheet" href="theme-random.css">
+
+<script>
+const t=["theme1","theme2","theme3"];
+document.documentElement.className=t[Math.floor(Math.random()*3)];
+</script>
+<iframe src="safe.html" style="display:none;width:0;height:0;border:0;"></iframe>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>发布文章 - unveweb</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    .box{max-width:700px;margin:50px auto;background:#1f2833;padding:30px;border-radius:12px;border:1px solid #45a29e;}
+    .box h3{color:#66fcf1;margin-bottom:20px;text-align:center;}
+    input,textarea{width:100%;padding:12px;margin:8px 0;border-radius:6px;background:#0b0c10;color:#fff;border:1px solid #444;}
+    button{width:100%;padding:12px;background:#45a29e;color:#000;font-weight:bold;border:none;border-radius:6px;margin-top:10px;cursor:pointer;}
+</style>
+</head>
+<body style="background:#0b0c10;color:#fff;margin:0;font-family:system-ui;">
+
+<div class="box">
+    <h3>发布新文章</h3>
+    <input id="title" placeholder="文章标题">
+    <textarea id="content" rows="10" placeholder="文章内容"></textarea>
+    <button onclick="postArticle()">发布文章</button>
+</div>
+
+<script>
+// 未登录不能发布
+if (!localStorage.getItem("loginUser")) {
+    alert("请先登录！");
+    location.href = "login.html";
+}
+
+// 获取当前正确用户名（自动同步改名后的名字）
+const loginUser = localStorage.getItem("loginUser");
+const isAdmin = loginUser === "【管理员】";
+
+// 发布文章
+function postArticle() {
+    let title = document.getElementById("title").value.trim();
+    let content = document.getElementById("content").value.trim();
+
+    if (!title || !content) {
+        alert("标题和内容不能为空！");
+        return;
+    }
+
+    // 文章作者（自动正确显示）
+    let author = isAdmin ? "【管理员】" : loginUser;
+
+    let articles = JSON.parse(localStorage.getItem("articles") || "[]");
+    articles.unshift({
+        title: title,
+        content: content,
+        user: author,
+        time: new Date().toLocaleString()
+    });
+
+    localStorage.setItem("articles", JSON.stringify(articles));
+    alert("文章发布成功！");
+    location.href = "index.html";
+}
+</script>
+
+</body>
+</html>

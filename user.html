@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<link rel="stylesheet" href="theme-random.css">
+<script>
+const t=["theme1","theme2","theme3"];
+document.documentElement.className=t[Math.floor(Math.random()*3)];
+</script>
+<iframe src="safe.html" style="display:none;width:0;height:0;border:0;"></iframe>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人中心 - unveweb</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    .box{max-width:500px;margin:50px auto;background:#1f2833;padding:30px;border-radius:12px;border:1px solid #45a29e;}
+    .box h3{color:#66fcf1;margin-bottom:20px;text-align:center;}
+    .item{margin:14px 0;}
+    label{color:#ccc;display:block;margin-bottom:6px;}
+    input{width:100%;padding:12px;border-radius:6px;background:#0b0c10;color:#fff;border:1px solid #444;}
+    button{width:100%;padding:12px;background:#45a29e;color:#000;font-weight:bold;border:none;border-radius:6px;margin-top:10px;cursor:pointer;}
+    .logout{background:#666;color:#fff;margin-top:8px;}
+    .del{background:#c82a2a;color:#fff;margin-top:8px;}
+    .tip{color:#999;font-size:14px;margin-top:4px;}
+    .chatBtn{background:#238560 !important; color:#fff !important; margin-top:12px !important;}
+</style>
+</head>
+<body style="background:#0b0c10;color:#fff;margin:0;font-family:system-ui;">
+
+<div class="box">
+    <h3>个人信息设置</h3>
+
+    <div class="item">
+        <label>账户用户名</label>
+        <input id="showUser">
+        <div class="tip" id="userTip"></div>
+    </div>
+
+    <div class="item">
+        <label>当前密码</label>
+        <input id="oldPwd" type="password" placeholder="请输入现有密码验证">
+    </div>
+
+    <div class="item">
+        <label>新密码</label>
+        <input id="newPwd" type="password" placeholder="留空则不修改密码">
+    </div>
+
+    <button onclick="saveAll()">保存修改</button>
+    <button class="logout" onclick="logout()">退出登录</button>
+    <button class="del" onclick="delAccount()">删除账号</button>
+
+    <button class="chatBtn" onclick="location.href='chatAll.html'">
+        进入好友·私聊·群聊中心
+    </button>
+</div>
+
+<script>
+// 未登录拦截
+if(!localStorage.getItem("loginUser")){
+    location.href = "login.html";
+}
+
+const ADMIN_ORIGIN = "UNVE";
+let loginMark = localStorage.getItem("loginUser");
+let isAdmin = loginMark === "【管理员】";
+
+let realUserName = isAdmin ? ADMIN_ORIGIN : loginMark;
+document.getElementById("showUser").value = realUserName;
+
+if(isAdmin){
+    document.getElementById("showUser").disabled = true;
+    document.getElementById("userTip").innerText = "管理员用户名固定，不可修改";
+}else{
+    document.getElementById("userTip").innerText = "可修改用户名，所有文章/资源自动同步";
+}
+
+// 保存资料
+function saveAll(){
+    let newName = document.getElementById("showUser").value.trim();
+    let oldPwd = document.getElementById("oldPwd").value.trim();
+    let newPwd = document.getElementById("newPwd").value.trim();
+
+    if(!oldPwd){
+        alert("请输入当前密码进行身份验证！");
+        return;
+    }
+
+    if(isAdmin){
+        let adminPwd = localStorage.getItem("adminPwd") || "123456";
+        if(oldPwd !== adminPwd){
+            alert("当前管理员密码错误！");
+            return;
+        }
+        if(newPwd){
+            localStorage.setItem("adminPwd", newPwd);
+            alert("管理员密码修改成功！");
+        }else{
+            alert("未填写新密码，无任何修改");
+        }
+        document.getElementById("oldPwd").value = "";
+        document.getElementById("newPwd").value = "";
+        return;
+    }
+
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
+    let idx = users.findIndex(x => x.user === realUserName);
+    if(idx === -1){
+        alert("账号异常！");
+        return;
+    }
+
+    if(users[idx].pwd !== oldPwd){
+        alert("当前密码错误！");
+        return;
+    }
+
+    if(newName !== realUserName){
+        let exist = users.find(x => x.user === newName);
+        if(exist){
+            alert("该用户名已被占用，请换一个！");
+            return;
+        }
+        users[idx].user = newName;
+        localStorage.setItem("loginUser", newName);
+
+        let arts = JSON.parse(localStorage.getItem("articles") || "[]");
+        arts = arts.map(a => a.user === realUserName ? {...a, user:newName} : a);
+        localStorage.setItem("articles", JSON.stringify(arts));
+
+        let res = JSON.parse(localStorage.getItem("resList") || "[]");
+        res = res.map(r => r.user === realUserName ? {...r, user:newName} : r);
+        localStorage.setItem("resList", JSON.stringify(res));
+    }
+
+    if(newPwd){
+        users[idx].pwd = newPwd;
+    }
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("个人资料保存成功！");
+    location.reload();
+}
+
+// 退出登录
+function logout(){
+    if(!confirm("确定退出登录？")) return;
+    localStorage.removeItem("loginUser");
+    localStorage.removeItem("adminLogin");
+    location.href = "login.html";
+}
+
+// ==============================
+// 删除账号 → 强制退出（已修复）
+// ==============================
+function delAccount(){
+    if(isAdmin){
+        alert("管理员账号禁止删除！");
+        return;
+    }
+    if(!confirm("⚠️ 确定删除账号？所有数据清空不可恢复！")) return;
+
+    // 1. 删除用户信息
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
+    users = users.filter(u => u.user !== realUserName);
+    localStorage.setItem("users", JSON.stringify(users));
+
+    // 2. 删除该用户发布的内容
+    let arts = JSON.parse(localStorage.getItem("articles") || "[]");
+    arts = arts.filter(a => a.user !== realUserName);
+    localStorage.setItem("articles", JSON.stringify(arts));
+
+    let res = JSON.parse(localStorage.getItem("resList") || "[]");
+    res = res.filter(r => r.user !== realUserName);
+    localStorage.setItem("resList", JSON.stringify(res));
+
+    // 3. ✅ 强制清空登录状态（关键修复）
+    localStorage.removeItem("loginUser");
+    localStorage.removeItem("adminLogin");
+
+    alert("账号已成功删除！即将退出登录");
+    
+    // 4. ✅ 强制跳回登录页
+    location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

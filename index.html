@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>unveweb - UNVE总站</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0b0c10;
+            color: #c5c5c5;
+            font-family: system-ui;
+        }
+        header {
+            background: #1f2833;
+            padding: 16px 0;
+            border-bottom: 1px solid #45a29e;
+        }
+        .header-inner{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            max-width:900px;
+            margin:0 auto;
+            padding:0 15px;
+        }
+        .logo{
+            font-size:26px;
+            font-weight:bold;
+            color:#66fcf1;
+            letter-spacing:1px;
+        }
+        nav a {
+            color: #c5c5c5;
+            margin-left: 14px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        nav a:hover {
+            color: #66fcf1;
+        }
+        .notice-wrap{
+            max-width:900px;
+            margin:20px auto;
+            padding:0 15px;
+        }
+        .notice-bar {
+            background: #1f2833;
+            padding: 14px 18px;
+            border-radius: 8px;
+            border: 1px solid #45a29e;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        .panel {
+            background: #1f2833;
+            padding: 22px;
+            border-radius: 10px;
+            border: 1px solid #45a29e;
+            margin-bottom: 30px;
+        }
+        .panel h2 {
+            color: #66fcf1;
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+        .art-item {
+            padding: 14px 0;
+            border-bottom: 1px solid #333;
+            margin-bottom: 10px;
+        }
+        .art-item h3 {
+            color: #fff;
+            margin-bottom: 6px;
+            font-size: 18px;
+        }
+        .art-item p {
+            font-size: 14px;
+            color: #aaa;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 13px;
+            color: #777;
+            border-top: 1px solid #222;
+            margin-top: 20px;
+        }
+    </style>
+    <link rel="stylesheet" href="theme-random.css">
+<script>
+const t=["theme1","theme2","theme3"];
+document.documentElement.className=t[Math.floor(Math.random()*3)];
+</script>
+<iframe src="safe.html" style="display:none;width:0;height:0;border:0;"></iframe>
+<iframe src="security.html" style="display:none;width:0;height:0;border:none;"></iframe>
+</head>
+<body>
+
+    <header>
+        <div class="header-inner">
+            <div class="logo">unveweb</div>
+            <nav>
+                <a href="index.html">首页</a>
+                <a href="download.html">资源下载</a>
+                <a href="upload.html">资源上传</a>
+                <a href="guestbook.html">留言社区</a>
+                <a href="login.html">登录/注册</a>
+                <a href="control.html">管理员页面</a>
+                <a href="adminlogin.html">管理员登录</a>
+                <a href="user.html">个人中心</a>
+                <a href="artical.html">文章上传</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="notice-wrap" id="noticeWrap"></div>
+
+    <div class="container">
+        <div class="panel">
+            <h2>最新分享文章，程序等资源</h2>
+            <div id="artContainer"></div>
+        </div>
+    </div>
+
+    <footer>
+        unveweb © 2026 UNVE COMPUTER
+    </footer>
+
+<script>
+// 显示公告
+function showNotice(){
+    let notices = JSON.parse(localStorage.getItem("siteNotices") || "[]");
+    let wrap = document.getElementById("noticeWrap");
+    if(notices.length > 0){
+        let first = notices[0];
+        wrap.innerHTML = `
+        <div class="notice-bar">
+            <div style="color:#66fcf1;font-weight:bold;margin-bottom:6px;">📢 全站官方公告</div>
+            <div>${first.content}</div>
+            <div style="font-size:13px;color:#888;margin-top:4px;">发布时间：${first.time}</div>
+        </div>
+        `;
+    }
+}
+
+function loadArticles(){
+    let list = JSON.parse(localStorage.getItem("articles") || "[]");
+    let box = document.getElementById("artContainer");
+    let html = "";
+
+    if(list.length === 0){
+        html = `<div class="art-item">暂无分享内容，登录后发布第一篇～</div>`;
+        box.innerHTML = html;
+        return;
+    }
+
+    list.forEach(item=>{
+        // 过滤用户自己撤回的（管理员可见）
+        let loginUser = localStorage.getItem("loginUser");
+        let isAdmin = loginUser === "【管理员】";
+        if (item.hidden && !isAdmin) return;
+
+        html += `
+        <div class="art-item">
+            <h3>${item.title}</h3>
+            <p><span style="color:#66fcf1;font-weight:bold;">${item.user}</span> 发布于 ${item.time}</p>
+            <div style="margin-top:8px;white-space:pre-wrap;">${item.content}</div>
+        </div>
+        `;
+    });
+    box.innerHTML = html;
+}
+
+showNotice();
+loadArticles();
+</script>
+</body>
+</html>

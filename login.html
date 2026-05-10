@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    .login-box{max-width:400px;margin:80px auto;background:#1f2833;padding:30px;border-radius:12px;border:1px solid #45a29e;}
+    .login-box h3{color:#66fcf1;text-align:center;margin-bottom:20px;}
+    input{width:100%;padding:12px;margin:8px 0;border-radius:6px;background:#0b0b0b;color:#fff;border:1px solid #444;}
+    button{width:100%;padding:12px;background:#45a29e;color:#000;font-weight:bold;border:none;border-radius:6px;cursor:pointer;}
+    .reg-btn{background:#333;color:#fff;margin-top:8px;}
+</style>
+<iframe src="safe.html" style="display:none;width:0;height:0;border:0;"></iframe>
+</head>
+<body style="background:#0b0b0b;color:#fff;margin:0;">
+
+<div class="login-box">
+    <h3>账号登录</h3>
+    <input id="user" placeholder="账号">
+    <input id="pwd" type="password" placeholder="密码">
+    <button onclick="login()">登录</button>
+    <button class="reg-btn" onclick="location.href='reg.html'">注册</button>
+</div>
+
+<script>
+// 已登录禁止访问
+if (localStorage.getItem("loginUser")) {
+    alert("已登录，请勿重复登录！");
+    location.href = "index.html";
+}
+
+function login() {
+    let user = document.getElementById("user").value.trim();
+    let pwd = document.getElementById("pwd").value.trim();
+
+    // ======================
+    // 管理员登录（读取已修改的密码）
+    // ======================
+    if (user === "UNVE") {
+        let correctPwd = localStorage.getItem("adminPwd") || "123456";
+        if (pwd === correctPwd) {
+            localStorage.setItem("loginUser", "【管理员】");
+            localStorage.setItem("adminLogin", "ok");
+            location.href = "control.html";
+            return;
+        } else {
+            alert("账号或密码错误！");
+            return;
+        }
+    }
+
+    // 普通用户登录
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
+    let find = users.find(u => u.user === user && u.pwd === pwd);
+    if (find) {
+        localStorage.setItem("loginUser", user);
+        location.href = "index.html";
+    } else {
+        alert("账号或密码错误！");
+    }
+}
+</script>
+</body>
+</html>

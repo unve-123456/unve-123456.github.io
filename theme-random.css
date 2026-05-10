@@ -1,0 +1,34 @@
+/* 主题1 默认青蓝 */
+:root.theme1 {
+    --bg:#0b0c10;
+    --card:#1f2833;
+    --pri:#66fcf1;
+    --sec:#45a29e;
+    --text:#c5c5c5;
+}
+/* 主题2 紫色 */
+:root.theme2 {
+    --bg:#0c0a18;
+    --card:#1a1735;
+    --pri:#b39dff;
+    --sec:#8a74e6;
+    --text:#c9c4e8;
+}
+/* 主题3 暖棕 */
+:root.theme3 {
+    --bg:#120f0b;
+    --card:#2b241b;
+    --pri:#ffc988;
+    --sec:#d4a066;
+    --text:#d8cbbb;
+}
+
+/* 覆盖全局基础色，不改动布局结构 */
+body{background:var(--bg)!important;color:var(--text)!important;}
+header{background:var(--card)!important;border-color:var(--sec)!important;}
+.panel,.notice-bar,.box{background:var(--card)!important;border-color:var(--sec)!important;}
+h2,h3,.logo{color:var(--pri)!important;}
+a:hover{color:var(--pri)!important;}
+button{background:var(--sec)!important;}
+button:hover{background:var(--pri)!important;}
+input,textarea{background:var(--bg)!important;border-color:var(--sec)!important;color:var(--text)!important;}

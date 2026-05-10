@@ -20,7 +20,6 @@ button:hover{background:#66fcf1;color:#000}
 </head>
 <body>
 <div class="container">
-
 <div class="panel">
 <h2>📢 公告管理</h2>
 <input type="text" id="noticeContent" placeholder="输入公告内容">
@@ -39,119 +38,148 @@ button:hover{background:#66fcf1;color:#000}
 </div>
 
 <script>
-// 权限验证（你原来的正确逻辑）
-if(localStorage.getItem("adminLogin")!="true"){
-    alert("无权限访问！");
-    location.href="login.html";
-}
-
-// 公告功能（纯本地，不联网，无报错）
+// 纯本地公告，不联网，不报错
 function addNotice(){
     let c = document.getElementById("noticeContent").value.trim();
     if(!c){alert("请输入内容");return}
-    let arr = JSON.parse(localStorage.getItem("siteNotices")||"[]");
-    arr.unshift({content:c,user:"管理员",time:new Date().toLocaleString()});
-    localStorage.setItem("siteNotices",JSON.stringify(arr));
+    let list = JSON.parse(localStorage.getItem("siteNotices")||"[]");
+    list.unshift({content:c,time:new Date().toLocaleString(),user:"管理员"});
+    localStorage.setItem("siteNotices",JSON.stringify(list));
     alert("发布成功！");
     document.getElementById("noticeContent").value="";
     loadNotices();
 }
 
 function loadNotices(){
-    let arr = JSON.parse(localStorage.getItem("siteNotices")||"[]");
+    let list = JSON.parse(localStorage.getItem("siteNotices")||"[]");
     let html = "";
-    arr.forEach((item,i)=>{
+    list.forEach((item,i)=>{
         html+=`<div class="item">${item.content}<br><small>${item.time}</small><button onclick="delNotice(${i})">删除</button></div>`;
     });
-    document.getElementById("noticeList").innerHTML = html||"<p>暂无公告</p>";
+    document.getElementById("noticeList").innerHTML=html||"<p>暂无公告</p>";
 }
 
 function delNotice(i){
     if(!confirm("确定删除？"))return;
-    let arr = JSON.parse(localStorage.getItem("siteNotices")||"[]");
-    arr.splice(i,1);
-    localStorage.setItem("siteNotices",JSON.stringify(arr));
+    let list=JSON.parse(localStorage.getItem("siteNotices")||"[]");
+    list.splice(i,1);
+    localStorage.setItem("siteNotices",JSON.stringify(list));
     loadNotices();
 }
 
 function clearNotice(){
-    if(!confirm("确定清空？"))return;
+    if(!confirm("确定清空所有公告？"))return;
     localStorage.removeItem("siteNotices");
     loadNotices();
 }
 
-// 文章
+// 文章管理
 function loadArticles(){
     let list=JSON.parse(localStorage.getItem("articles")||"[]");
-    let ht="";
-    list.forEach((it,i)=>{ht+=`<div class="item">${it.title} | ${it.user} <button onclick="delArt(${i})">删除</button></div>`});
-    document.getElementById("articleList").innerHTML=ht||"<p>暂无文章</p>";
+    let html="";
+    list.forEach((item,i)=>{
+        html+=`<div class="item">${item.title} | ${item.user}<button onclick="delArt(${i})">删除</button></div>`;
+    });
+    document.getElementById("articleList").innerHTML=html||"<p>暂无文章</p>";
 }
 function delArt(i){
     if(!confirm("确定删除？"))return;
-    let a=JSON.parse(localStorage.getItem("articles")||"[]");a.splice(i,1);localStorage.setItem("articles",JSON.stringify(a));loadArticles();
+    let list=JSON.parse(localStorage.getItem("articles")||"[]");
+    list.splice(i,1);
+    localStorage.setItem("articles",JSON.stringify(list));
+    loadArticles();
 }
 
-// 资源
+// 资源管理
 function loadRes(){
-    let list=JSON.parse(localStorage.getItem("resList")||"[]");let ht="";
-    list.forEach((it,i)=>{ht+=`<div class="item">${it.title} | ${it.user} <button onclick="delRes(${i})">删除</button></div>`});
-    document.getElementById("resList").innerHTML=ht||"<p>暂无资源</p>";
+    let list=JSON.parse(localStorage.getItem("resList")||"[]");
+    let html="";
+    list.forEach((item,i)=>{
+        html+=`<div class="item">${item.title} | ${item.user}<button onclick="delRes(${i})">删除</button></div>`;
+    });
+    document.getElementById("resList").innerHTML=html||"<p>暂无资源</p>";
 }
 function delRes(i){
     if(!confirm("确定删除？"))return;
-    let a=JSON.parse(localStorage.getItem("resList")||"[]");a.splice(i,1);localStorage.setItem("resList",JSON.stringify(a));loadRes();
+    let list=JSON.parse(localStorage.getItem("resList")||"[]");
+    list.splice(i,1);
+    localStorage.setItem("resList",JSON.stringify(list));
+    loadRes();
 }
 
-// 用户
+// 用户管理
 function loadUsers(){
-    let list=JSON.parse(localStorage.getItem("users")||"[]");let ht="";
-    list.forEach((it,i)=>{ht+=`<div class="item">${it.user} <button onclick="delUser(${i})">删除</button></div>`});
-    document.getElementById("userList").innerHTML=ht||"<p>暂无用户</p>";
+    let list=JSON.parse(localStorage.getItem("users")||"[]");
+    let html="";
+    list.forEach((item,i)=>{
+        html+=`<div class="item">${item.user}<button onclick="delUser(${i})">删除</button></div>`;
+    });
+    document.getElementById("userList").innerHTML=html||"<p>暂无用户</p>";
 }
 function delUser(i){
-    if(!confirm("确定删除？"))return;
+    if(!confirm("确定删除？此操作不可恢复！"))return;
     let users=JSON.parse(localStorage.getItem("users")||"[]");
-    let un=users[i].user;users.splice(i,1);localStorage.setItem("users",JSON.stringify(users));
+    let username=users[i].user;
+    users.splice(i,1);
+    localStorage.setItem("users",JSON.stringify(users));
 
-    let articles=JSON.parse(localStorage.getItem("articles")||"[]").filter(x=>x.user!=un);
-    let res=JSON.parse(localStorage.getItem("resList")||"[]").filter(x=>x.user!=un);
+    let articles=JSON.parse(localStorage.getItem("articles")||"[]").filter(a=>a.user!=username);
+    let res=JSON.parse(localStorage.getItem("resList")||"[]").filter(r=>r.user!=username);
     localStorage.setItem("articles",JSON.stringify(articles));
     localStorage.setItem("resList",JSON.stringify(res));
     loadUsers();loadArticles();loadRes();
 }
 
-// 留言
+// 留言管理
 function loadMessages(){
-    let list=JSON.parse(localStorage.getItem("guestbook")||"[]");let ht="";
-    list.forEach((it,i)=>{
-        let tip=it.hidden?"【已撤回】":"";
-        ht+=`<div class="item">${it.user} ${it.time}<br>${it.content} ${tip}<button onclick="adminDelMsg(${i})">删除</button></div>`;
+    let list=JSON.parse(localStorage.getItem("guestbook")||"[]");
+    let html="";
+    list.forEach((item,i)=>{
+        let tip=item.hidden?"【已撤回】":"";
+        html+=`<div class="item">${item.user} ${item.time}<br>${item.content} ${tip}<button onclick="adminDelMsg(${i})">删除</button></div>`;
     });
-    document.getElementById("msgList").innerHTML=ht||"<p>暂无留言</p>";
+    document.getElementById("msgList").innerHTML=html||"<p>暂无留言</p>";
 }
 function adminDelMsg(i){
     if(!confirm("确定删除？"))return;
-    let a=JSON.parse(localStorage.getItem("guestbook")||"[]");a.splice(i,1);localStorage.setItem("guestbook",JSON.stringify(a));loadMessages();
+    let list=JSON.parse(localStorage.getItem("guestbook")||"[]");
+    list.splice(i,1);
+    localStorage.setItem("guestbook",JSON.stringify(list));
+    loadMessages();
 }
 
-// 封禁
+// 封禁管理
 function loadBans(){
-    let list=JSON.parse(localStorage.getItem("banRecord")||"[]");let ht="";
-    list.forEach((it,i)=>{ht+=`<div class="item">${it.devId} | ${it.banType}<button onclick="unban(${i})">解封</button></div>`});
-    document.getElementById("banList").innerHTML=ht||"<p>暂无封禁</p>";
+    let list=JSON.parse(localStorage.getItem("banRecord")||"[]");
+    let html="";
+    list.forEach((item,i)=>{
+        html+=`<div class="item">${item.devId} | ${item.banType}<button onclick="unban(${i})">解封</button></div>`;
+    });
+    document.getElementById("banList").innerHTML=html||"<p>暂无封禁</p>";
 }
 function unban(i){
     if(!confirm("确定解封？"))return;
-    let a=JSON.parse(localStorage.getItem("banRecord")||"[]");a.splice(i,1);localStorage.setItem("banRecord",JSON.stringify(a));loadBans();
+    let list=JSON.parse(localStorage.getItem("banRecord")||"[]");
+    list.splice(i,1);
+    localStorage.setItem("banRecord",JSON.stringify(list));
+    loadBans();
 }
 
-// 退出
+// 退出登录
 function logout(){
-    localStorage.clear();location.href="login.html";
+    localStorage.clear();
+    location.href="login.html";
 }
 
-window.onload=function(){loadNotices();loadArticles();loadRes();loadUsers();loadMessages();loadBans()}
+// 页面加载
+window.onload=function(){
+    loadNotices();
+    loadArticles();
+    loadRes();
+    loadUsers();
+    loadMessages();
+    loadBans();
+}
 </script>
 </body>
 </html>

@@ -16,11 +16,23 @@ button{background:#45a29e;color:#fff;border:none;padding:10px 20px;border-radius
 button:hover{background:#66fcf1;color:#000}
 .list{margin-top:15px;max-height:200px;overflow-y:auto}
 .item{padding:10px;background:#0b0c10;margin-bottom:8px;border-radius:5px;border-left:3px solid #45a29e}
+.auth-box{text-align:center;padding:30px;background:#1f2333;border-radius:10px;margin-bottom:20px}
+.auth-box input{width:200px;margin:10px 0}
 </style>
 </head>
 <body>
-<div class="container">
 
+<!-- 管理员口令验证（必须输入：我是管理员 才能进入） -->
+<div class="auth-box" id="authBox">
+    <h2>管理员验证</h2>
+    <p>请输入管理员口令</p>
+    <input type="text" id="adminKey" placeholder="输入口令">
+    <br>
+    <button onclick="checkAdmin()">验证进入</button>
+</div>
+
+<!-- 后台功能（验证通过才显示） -->
+<div class="container" id="adminPanel" style="display:none">
 <div class="panel">
 <h2>📢 公告管理</h2>
 <input type="text" id="noticeContent" placeholder="输入公告内容">
@@ -39,62 +51,61 @@ button:hover{background:#66fcf1;color:#000}
 </div>
 
 <script>
-// ==========================================
-// 【终极正确权限】
-// 登录用户 = UNVE → 直接放行！永远有权限！
-// ==========================================
+// ==========================
+// 第一层验证：必须登录 UNVE
+// ==========================
 let loginUser = localStorage.getItem("loginUser");
-
-console.log("当前登录用户：", loginUser);
-
-// 只要没登录 → 去登录
-if (!loginUser) {
-    alert("请先登录！");
-    location.href = "login.html";
-    throw new Error("停止运行");
-}
-
-// 只要不是 UNVE → 拦截
-if (loginUser !== "UNVE") {
-    alert("无权限访问！仅管理员可进入");
+if (!loginUser || loginUser !== "UNVE") {
+    alert("无权限！仅管理员可进入！");
     location.href = "user.html";
-    throw new Error("停止运行");
 }
 
-// ==========================================
-// 下面所有功能 100% 正常、稳定、离线可用
-// ==========================================
-function publishNotice() {
-    let content = document.getElementById("noticeContent").value.trim();
-    if (!content) { alert("请输入内容"); return; }
+// ==========================
+// 第二层验证：必须输入口令：我是管理员
+// ==========================
+function checkAdmin() {
+    let key = document.getElementById("adminKey").value.trim();
+    if (key === "我是管理员") {
+        document.getElementById("authBox").style.display = "none";
+        document.getElementById("adminPanel").style.display = "block";
+        loadAll();
+    } else {
+        alert("口令错误！");
+    }
+}
 
-    let localNotices = JSON.parse(localStorage.getItem("siteNotices") || "[]");
-    localNotices.unshift({
-        content: content,
+// ==========================
+// 公告功能（本地安全，不联网）
+// ==========================
+function publishNotice() {
+    let c = document.getElementById("noticeContent").value.trim();
+    if (!c) { alert("请输入内容"); return; }
+    let arr = JSON.parse(localStorage.getItem("siteNotices") || "[]");
+    arr.unshift({
+        content: c,
         user: loginUser,
         time: new Date().toLocaleString()
     });
-    localStorage.setItem("siteNotices", JSON.stringify(localNotices));
-
+    localStorage.setItem("siteNotices", JSON.stringify(arr));
     alert("发布成功！");
     document.getElementById("noticeContent").value = "";
     loadAllNotices();
 }
 
 function loadAllNotices() {
-    let list = JSON.parse(localStorage.getItem("siteNotices") || "[]");
-    let html = "";
-    list.forEach((item, i) => {
-        html += `<div class="item">${item.content}<br><small>${item.time} | ${item.user}</small><button onclick="delNotice(${i})">删除</button></div>`;
+    let arr = JSON.parse(localStorage.getItem("siteNotices") || "[]");
+    let h = "";
+    arr.forEach((it, i) => {
+        h += `<div class="item">${it.content}<br><small>${it.time} | ${it.user}</small><button onclick="delNotice(${i})">删除</button></div>`;
     });
-    document.getElementById("noticeList").innerHTML = html || "<p>暂无公告</p>";
+    document.getElementById("noticeList").innerHTML = h || "<p>暂无公告</p>";
 }
 
 function delNotice(i) {
     if (!confirm("确定删除？")) return;
-    let arr = JSON.parse(localStorage.getItem("siteNotices") || "[]");
-    arr.splice(i, 1);
-    localStorage.setItem("siteNotices", JSON.stringify(arr));
+    let a = JSON.parse(localStorage.getItem("siteNotices") || "[]");
+    a.splice(i, 1);
+    localStorage.setItem("siteNotices", JSON.stringify(a));
     loadAllNotices();
 }
 
@@ -104,6 +115,9 @@ function clearAllNotices() {
     loadAllNotices();
 }
 
+// ==========================
+// 全部管理功能
+// ==========================
 function loadArticles(){let a=JSON.parse(localStorage.getItem("articles")||"[]");let h="";a.forEach((it,i)=>{h+=`<div class="item">${it.title} | ${it.user}<button onclick="delArt(${i})">删除</button></div>`});document.getElementById("articleList").innerHTML=h||"<p>暂无文章</p>"}
 function delArt(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("articles")||"[]");a.splice(i,1);localStorage.setItem("articles",JSON.stringify(a));loadArticles()}
 function loadRes(){let a=JSON.parse(localStorage.getItem("resList")||"[]");let h="";a.forEach((it,i)=>{h+=`<div class="item">${it.title} | ${it.user}<button onclick="delRes(${i})">删除</button></div>`});document.getElementById("resList").innerHTML=h||"<p>暂无资源</p>"}
@@ -116,7 +130,14 @@ function loadBans(){let a=JSON.parse(localStorage.getItem("banRecord")||"[]");le
 function unban(i){if(!confirm("确定？"))return;let a=JSON.parse(localStorage.getItem("banRecord")||"[]");a.splice(i,1);localStorage.setItem("banRecord",JSON.stringify(a));loadBans()}
 function logout(){localStorage.clear();location.href="login.html"}
 
-window.onload=function(){loadAllNotices();loadArticles();loadRes();loadUsers();loadMessages();loadBans()}
+function loadAll() {
+    loadAllNotices();
+    loadArticles();
+    loadRes();
+    loadUsers();
+    loadMessages();
+    loadBans();
+}
 </script>
 </body>
 </html>
